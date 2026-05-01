@@ -1,26 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
-
-// LandingPage inline - no external file needed
-const LandingPage = () => {
-  const navigate = useNavigate ? require('react-router-dom').useNavigate() : null;
-  return (
-    <div style={{minHeight:'100vh',background:'#080808',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,fontFamily:'sans-serif'}}>
-      <div style={{textAlign:'center'}}>
-        <div style={{fontSize:48,marginBottom:16}}>🍽️</div>
-        <h1 style={{color:'#fff',fontSize:48,fontWeight:900,letterSpacing:'-2px',marginBottom:8}}>MenuVia</h1>
-        <p style={{color:'rgba(255,255,255,0.4)',fontSize:18,marginBottom:32}}>India's QR-first restaurant platform</p>
-        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-          <a href="/admin/register" style={{background:'#e94560',color:'#fff',padding:'14px 32px',borderRadius:14,fontWeight:700,fontSize:16,textDecoration:'none'}}>Start Free Trial →</a>
-          <a href="/admin/login" style={{background:'rgba(255,255,255,0.08)',color:'#fff',padding:'14px 32px',borderRadius:14,fontWeight:600,fontSize:16,textDecoration:'none',border:'1px solid rgba(255,255,255,0.1)'}}>Login</a>
-        </div>
-      </div>
-      <p style={{color:'rgba(255,255,255,0.2)',fontSize:13}}>QR Ordering · UPI Payments · Kitchen Display · Advance Bookings</p>
-    </div>
-  );
-};
+import LandingPage         from './pages/LandingPage';
 import MenuPage            from './pages/MenuPage';
 import AdminLogin          from './pages/admin/AdminLogin';
 import AdminRegister       from './pages/admin/AdminRegister';
