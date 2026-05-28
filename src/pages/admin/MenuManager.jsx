@@ -266,10 +266,12 @@ export default function MenuManager() {
   function submitItem() {
     const payload = {
       ...itemForm,
+      category_id:      Number(itemForm.category_id),
       price:            Number(itemForm.price),
       discounted_price: itemForm.discounted_price && Number(itemForm.discounted_price) > 0 ? Number(itemForm.discounted_price) : null,
+      preparation_time_mins: Number(itemForm.preparation_time_mins) || 15,
       image_url:        itemForm.image_url || null,
-      is_combo:         itemForm.is_combo ? 1 : 0,
+      is_combo:         itemForm.is_combo ? true : false,
       combo_items:      itemForm.is_combo && itemForm.combo_items?.length ? itemForm.combo_items : null,
       combo_savings:    itemForm.combo_savings ? Number(itemForm.combo_savings) : null,
       tags:             itemForm.is_combo ? ['combo'] : null,
