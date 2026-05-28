@@ -87,7 +87,7 @@ export default function AdminLogin() {
             <div>
               <label className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Password</label>
               <div className="relative">
-                <input type={showPass ? 'text' : 'password'} required value={form.password}
+                <input type={showPass ? 'text' : 'password'} required autoComplete="current-password" value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#e94560]/60 transition-all pr-16"
