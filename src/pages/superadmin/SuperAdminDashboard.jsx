@@ -45,7 +45,7 @@ function Sidebar({ onClose }) {
             <span className="text-white text-sm font-black">S</span>
           </div>
           <div>
-            <div className="text-white font-black text-sm">MenuCloud</div>
+            <div className="text-white font-black text-sm">MenuVia</div>
             <div className="text-purple-400 text-xs font-semibold">Super Admin</div>
           </div>
         </div>
@@ -124,11 +124,12 @@ function Overview() {
     refetchInterval: 30000,
   });
   const d = data;
+  const recentRestaurants = data?.recentRestaurants || [];
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-black text-white mb-1">Platform Overview</h1>
-        <p className="text-white/40 text-sm">All restaurants across MenuCloud</p>
+        <p className="text-white/40 text-sm">All restaurants across MenuVia</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <StatCard icon="🏪" label="Total restaurants"   value={isLoading ? null : d?.total_restaurants} />
@@ -270,7 +271,7 @@ function RestaurantsPage() {
                     <div className="text-white/30 text-xs">orders</div>
                   </div>
                   <div className="text-center hidden sm:block">
-                    <div className="text-green-400 font-bold text-sm">{fmt(r.total_revenue)}</div>
+                    <div className="text-green-400 font-bold text-sm">{fmt(r?.total_revenue || 0)}</div>
                     <div className="text-white/30 text-xs">revenue</div>
                   </div>
                   <div className="text-center hidden md:block">
@@ -320,7 +321,7 @@ function RestaurantsPage() {
                   {/* KPI grid */}
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: 'Total revenue',   value: fmt(detail.restaurant.total_revenue),   color: 'text-green-400'  },
+                      { label: 'Total revenue',   value: fmt(detail?.restaurant?.total_revenue || 0),   color: 'text-green-400'  },
                       { label: 'Total orders',    value: detail.restaurant.total_orders ?? 0,    color: 'text-white'      },
                       { label: 'Menu items',      value: detail.restaurant.menu_item_count ?? 0, color: 'text-white'      },
                       { label: 'Tables',          value: detail.restaurant.table_count ?? 0,     color: 'text-white'      },
@@ -563,12 +564,12 @@ function PlatformAnalytics() {
                     <span className="text-white text-sm font-semibold truncate">{r.name}</span>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border uppercase ${PLAN_COLORS[r.plan_type]}`}>{r.plan_type}</span>
-                      <span className="text-green-400 text-xs font-bold">{fmt(r.total_revenue)}</span>
+                      <span className="text-green-400 text-xs font-bold">{fmt(r?.total_revenue || 0)}</span>
                     </div>
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-[#e94560] rounded-full"
-                      style={{ width: `${topRestaurants[0]?.total_revenue ? (r.total_revenue / topRestaurants[0].total_revenue) * 100 : 0}%` }} />
+                      style={{ width: `${topRestaurants[0]?.total_revenue ? ((r?.total_revenue || 0) / (topRestaurants[0]?.total_revenue || 1)) * 100 : 0}%` }} />
                   </div>
                   <div className="flex gap-3 mt-1">
                     <span className="text-white/30 text-xs">{r.total_orders} orders</span>
