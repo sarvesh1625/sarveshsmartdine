@@ -139,7 +139,7 @@ function Overview() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon="📈" label="Total revenue"       value={isLoading ? null : fmt(d?.total_revenue)} color="text-green-400" />
-        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d?.total_orders} />
+        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d??.total_orders || 0} />
         <StatCard icon="🔴" label="Inactive restaurants" value={isLoading ? null : d?.inactive_restaurants} color="text-red-400" />
         <StatCard icon="👤" label="Restaurant admins"   value={isLoading ? null : d?.total_admins} />
       </div>
@@ -267,7 +267,7 @@ function RestaurantsPage() {
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center hidden sm:block">
-                    <div className="text-white font-bold text-sm">{r.total_orders ?? 0}</div>
+                    <div className="text-white font-bold text-sm">{r?.total_orders || 0 ?? 0}</div>
                     <div className="text-white/30 text-xs">orders</div>
                   </div>
                   <div className="text-center hidden sm:block">
@@ -322,11 +322,11 @@ function RestaurantsPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: 'Total revenue',   value: fmt(detail?.restaurant?.total_revenue || 0),   color: 'text-green-400'  },
-                      { label: 'Total orders',    value: detail.restaurant.total_orders ?? 0,    color: 'text-white'      },
-                      { label: 'Menu items',      value: detail.restaurant.menu_item_count ?? 0, color: 'text-white'      },
-                      { label: 'Tables',          value: detail.restaurant.table_count ?? 0,     color: 'text-white'      },
-                      { label: 'Staff',           value: detail.restaurant.staff_count ?? 0,     color: 'text-white'      },
-                      { label: 'Avg rating',      value: detail.restaurant.avg_food_rating ? `${detail.restaurant.avg_food_rating}★` : '—', color: 'text-yellow-400' },
+                      { label: 'Total orders',    value: detail?.restaurant?.total_orders || 0 ?? 0,    color: 'text-white'      },
+                      { label: 'Menu items',      value: detail?.restaurant?.menu_item_count ?? 0, color: 'text-white'      },
+                      { label: 'Tables',          value: detail?.restaurant?.table_count ?? 0,     color: 'text-white'      },
+                      { label: 'Staff',           value: detail?.restaurant?.staff_count || 0 ?? 0,     color: 'text-white'      },
+                      { label: 'Avg rating',      value: detail?.restaurant?.avg_food_rating ? `${detail?.restaurant?.avg_food_rating}★` : '—', color: 'text-yellow-400' },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="bg-white/5 rounded-xl p-3">
                         <div className={`text-lg font-black mb-0.5 ${color}`}>{value}</div>
@@ -339,14 +339,14 @@ function RestaurantsPage() {
                   <div className="bg-white/5 rounded-2xl p-4">
                     <h3 className="text-white font-bold text-sm mb-3">Restaurant info</h3>
                     {[
-                      ['Email',       detail.restaurant.email || '—'],
-                      ['Phone',       detail.restaurant.phone || '—'],
-                      ['City',        detail.restaurant.city  || '—'],
-                      ['State',       detail.restaurant.state || '—'],
-                      ['Language',    (detail.restaurant.default_language || 'en').toUpperCase()],
-                      ['Registered',  fmtDate(detail.restaurant.created_at)],
-                      ['Last order',  fmtDate(detail.restaurant.last_order_at)],
-                      ['Status',      detail.restaurant.is_active ? '🟢 Active' : '🔴 Inactive'],
+                      ['Email',       detail?.restaurant?.email || '—'],
+                      ['Phone',       detail?.restaurant?.phone || '—'],
+                      ['City',        detail?.restaurant?.city  || '—'],
+                      ['State',       detail?.restaurant?.state || '—'],
+                      ['Language',    (detail?.restaurant?.default_language || 'en').toUpperCase()],
+                      ['Registered',  fmtDate(detail?.restaurant?.created_at)],
+                      ['Last order',  fmtDate(detail?.restaurant?.last_order_at)],
+                      ['Status',      detail?.restaurant?.is_active ? '🟢 Active' : '🔴 Inactive'],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
                         <span className="text-white/40 text-xs">{label}</span>
@@ -356,10 +356,10 @@ function RestaurantsPage() {
                   </div>
 
                   {/* Revenue chart */}
-                  {detail.revenueByDay?.length > 0 && (
+                  {detail?.revenueByDay || []?.length > 0 && (
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-4">Revenue — last 7 days</h3>
-                      <MiniBarChart data={detail.revenueByDay} />
+                      <MiniBarChart data={detail?.revenueByDay || []} />
                     </div>
                   )}
 
@@ -368,7 +368,7 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Top selling items</h3>
                       <div className="space-y-2">
-                        {detail.topItems.map((item, i) => (
+                        {detail?.topItems?.map((item, i) => (
                           <div key={item.name} className="flex items-center gap-2">
                             <span className="text-white/30 text-xs w-4">#{i+1}</span>
                             <div className="flex-1">
@@ -378,7 +378,7 @@ function RestaurantsPage() {
                               </div>
                               <div className="h-1 bg-white/10 rounded-full">
                                 <div className="h-full bg-[#e94560] rounded-full"
-                                  style={{ width: `${(item.total_sold / detail.topItems[0].total_sold) * 100}%` }} />
+                                  style={{ width: `${(item.total_sold / detail?.topItems?.[0]?.total_sold || 1) * 100}%` }} />
                               </div>
                             </div>
                           </div>
@@ -392,7 +392,7 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Recent orders</h3>
                       <div className="space-y-1.5">
-                        {detail.recentOrders.map(o => (
+                        {detail?.recentOrders?.map(o => (
                           <div key={o.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
                             <div>
                               <span className="text-white text-xs font-bold">#{o.id.slice(0,8).toUpperCase()}</span>
@@ -416,7 +416,7 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Staff members</h3>
                       <div className="space-y-2">
-                        {detail.staff.map(s => (
+                        {detail?.staff?.map(s => (
                           <div key={s.id} className="flex items-center justify-between">
                             <div>
                               <p className="text-white text-xs font-semibold">{s.name}</p>
@@ -538,7 +538,7 @@ function PlatformAnalytics() {
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${stats?.total_restaurants ? (value / stats.total_restaurants) * 100 : 0}%`, background: color }} />
+                  style={{ width: `${stats?.total_restaurants ? (value / stats?.total_restaurants || 0) * 100 : 0}%`, background: color }} />
               </div>
             </div>
           ))}
@@ -572,7 +572,7 @@ function PlatformAnalytics() {
                       style={{ width: `${topRestaurants[0]?.total_revenue ? ((r?.total_revenue || 0) / (topRestaurants[0]?.total_revenue || 1)) * 100 : 0}%` }} />
                   </div>
                   <div className="flex gap-3 mt-1">
-                    <span className="text-white/30 text-xs">{r.total_orders} orders</span>
+                    <span className="text-white/30 text-xs">{r?.total_orders || 0} orders</span>
                     {r.city && <span className="text-white/20 text-xs">📍 {r.city}</span>}
                   </div>
                 </div>
