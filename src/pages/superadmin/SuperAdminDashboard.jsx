@@ -356,7 +356,7 @@ function RestaurantsPage() {
                   </div>
 
                   {/* Revenue chart */}
-                  {detail?.revenueByDay || []?.length > 0 && (
+                  {(detail?.revenueByDay?.length > 0) && (
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-4">Revenue — last 7 days</h3>
                       <MiniBarChart data={detail?.revenueByDay || []} />
@@ -374,7 +374,7 @@ function RestaurantsPage() {
                             <div className="flex-1">
                               <div className="flex justify-between text-xs mb-1">
                                 <span className="text-white/80 font-semibold truncate">{item.name}</span>
-                                <span className="text-white/50 flex-shrink-0 ml-2">{item.total_sold} sold · {fmt(item.revenue)}</span>
+                                <span className="text-white/50 flex-shrink-0 ml-2">{item.total_sold} sold · {fmt(item.total_revenue || 0)}</span>
                               </div>
                               <div className="h-1 bg-white/10 rounded-full">
                                 <div className="h-full bg-[#e94560] rounded-full"
@@ -483,7 +483,7 @@ function MiniBarChart({ data }) {
     <div className="flex items-end gap-1.5 h-28">
       {data.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <div className="text-white/30 text-[9px] text-center leading-tight">{fmt(d.revenue)}</div>
+          <div className="text-white/30 text-[9px] text-center leading-tight">{fmt(Number(d.revenue) || 0)}</div>
           <div className="w-full bg-[#e94560] rounded-t-sm"
             style={{ height: `${Math.max((Number(d.revenue) / max) * 64, 3)}px` }} />
           <div className="text-white/30 text-[9px] text-center">
@@ -503,7 +503,7 @@ function PlatformAnalytics() {
   });
   const stats          = data?.stats;
   const topRestaurants = data?.topRestaurants ?? [];
-  const revenueByDay   = data?.revenueByDay   ?? [];
+  const revenueByDay   = Array.isArray(data?.revenueByDay) ? data.revenueByDay : [];
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
