@@ -267,7 +267,7 @@ function RestaurantsPage() {
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center hidden sm:block">
-                    <div className="text-white font-bold text-sm">{r?.total_orders || 0 ?? 0}</div>
+                    <div className="text-white font-bold text-sm">{r?.total_orders || 0}</div>
                     <div className="text-white/30 text-xs">orders</div>
                   </div>
                   <div className="text-center hidden sm:block">
@@ -322,10 +322,10 @@ function RestaurantsPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: 'Total revenue',   value: fmt(detail?.restaurant?.total_revenue || 0),   color: 'text-green-400'  },
-                      { label: 'Total orders',    value: detail?.restaurant?.total_orders || 0 ?? 0,    color: 'text-white'      },
-                      { label: 'Menu items',      value: detail?.restaurant?.menu_item_count ?? 0, color: 'text-white'      },
-                      { label: 'Tables',          value: detail?.restaurant?.table_count ?? 0,     color: 'text-white'      },
-                      { label: 'Staff',           value: detail?.restaurant?.staff_count || 0 ?? 0,     color: 'text-white'      },
+                      { label: 'Total orders',    value: detail?.restaurant?.total_orders || 0,    color: 'text-white'      },
+                      { label: 'Menu items',      value: (detail?.restaurant?.menu_item_count ?? 0), color: 'text-white'      },
+                      { label: 'Tables',          value: (detail?.restaurant?.table_count ?? 0),     color: 'text-white'      },
+                      { label: 'Staff',           value: detail?.restaurant?.staff_count || 0,     color: 'text-white'      },
                       { label: 'Avg rating',      value: detail?.restaurant?.avg_food_rating ? `${detail?.restaurant?.avg_food_rating}★` : '—', color: 'text-yellow-400' },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="bg-white/5 rounded-xl p-3">
