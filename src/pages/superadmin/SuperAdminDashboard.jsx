@@ -139,7 +139,7 @@ function Overview() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon="📈" label="Total revenue"       value={isLoading ? null : fmt(d?.total_revenue)} color="text-green-400" />
-        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d??.total_orders || 0} />
+        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d?.total_orders || 0} />
         <StatCard icon="🔴" label="Inactive restaurants" value={isLoading ? null : d?.inactive_restaurants} color="text-red-400" />
         <StatCard icon="👤" label="Restaurant admins"   value={isLoading ? null : d?.total_admins} />
       </div>
