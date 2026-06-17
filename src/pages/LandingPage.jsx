@@ -899,7 +899,7 @@ export default function LandingPage() {
                 <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #FF2D55, #FF6B35)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 16, color: '#fff' }}>S</div>
                 <span style={{ fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 18, color: '#fff' }}>SmartDine</span>
               </div>
-              <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, maxWidth: 220 }}>India's smartest restaurant digital ordering platform. Made with ❤️ in Kakinada.</p>
+              <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, maxWidth: 220 }}>India's smartest restaurant digital ordering platform. Made with ❤️ in Visakhapatnam.</p>
             </div>
             {[
               { title: 'Product', links: ['Features', 'Pricing', 'How it works', 'Kitchen Display', 'Analytics'] },

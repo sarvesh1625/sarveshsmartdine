@@ -348,10 +348,19 @@ export default function MenuManager() {
 
               {/* Category */}
               <div className="col-span-2">
-                <select value={itemForm.category_id} onChange={e => setItemForm({...itemForm,category_id:e.target.value})} className={inp}>
-                  <option value="">Select Category *</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name_en}</option>)}
-                </select>
+                <select
+  value={itemForm.category_id}
+  onChange={e => setItemForm({...itemForm, category_id: e.target.value})}
+  className={inp}
+  style={{ colorScheme: 'dark' }}
+>
+  <option value="" style={{ background: '#1a1a1a', color: '#fff' }}>Select Category *</option>
+  {categories.map(c => (
+    <option key={c.id} value={c.id} style={{ background: '#1a1a1a', color: '#fff' }}>
+      {c.name_en}
+    </option>
+  ))}
+</select>
               </div>
 
               {/* Names */}
