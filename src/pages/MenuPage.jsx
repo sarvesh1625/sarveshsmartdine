@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
 import useCartStore from '../store/cartStore';
 import useCustomerStore from '../store/customerStore';
 import CartDrawer from '../components/menu/CartDrawer';
@@ -21,39 +20,40 @@ function parseComboItems(raw) {
 
 export default function MenuPage() {
   const { slug, tableId } = useParams();
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [vegOnly, setVegOnly] = useState(false);
+  const navigate = useNavigate();
+
+  const [activeCategory,   setActiveCategory]   = useState(null);
+  const [selectedItem,     setSelectedItem]      = useState(null);
+  const [cartOpen,         setCartOpen]          = useState(false);
+  const [searchQuery,      setSearchQuery]       = useState('');
+  const [vegOnly,          setVegOnly]           = useState(false);
+  const [showSignIn,       setShowSignIn]        = useState(false);
+  const [highlightedItemId] = useState(null);
+
   const categoryRefs = useRef({});
-  const { addItem, removeItem, getItemCount, getTotal, setTableContext } = useCartStore();
-  const [highlightedItemId, setHighlightedItemId] = useState(null);
 
+  const { addItem, getItemCount, getTotal, setTableContext } = useCartStore();
+  const { customer, isLoggedIn } = useCustomerStore();
 
-
-  // Fetch restaurant UPI ID for payment QR
+  // Fetch restaurant payment settings (UPI ID, pay-first flag)
   const { data: paymentSettings } = useQuery({
     queryKey: ['public-payment', slug, tableId],
     queryFn:  () => axios.get(`/api/v1/restaurant/public/${slug}${tableId ? `?table=${tableId}` : ''}`).then(r => r.data.data),
     staleTime: 10 * 60 * 1000,
   });
-  const upiId       = paymentSettings?.upi_id || null;
+  const upiId        = paymentSettings?.upi_id      || null;
   const tableUpiOnly = paymentSettings?.tableUpiOnly || false;
-  const { customer, isLoggedIn } = useCustomerStore();
-  const navigate = useNavigate();
-  const [showSignIn, setShowSignIn] = useState(false);
 
+  // Fetch menu
   const { data, isLoading, error } = useQuery({
     queryKey: ['menu', slug],
-    queryFn: () => axios.get(`/api/v1/menu-items/public?restaurantSlug=${slug}`).then(r => r.data.data),
+    queryFn:  () => axios.get(`/api/v1/menu-items/public?restaurantSlug=${slug}`).then(r => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
     if (data && tableId) setTableContext(data.restaurant.id, tableId);
     if (data?.menu?.length) setActiveCategory(data.menu[0].id);
-    // Show sign-in sheet if customer not identified yet
     if (data && !isLoggedIn()) setShowSignIn(true);
   }, [data]);
 
@@ -61,13 +61,13 @@ export default function MenuPage() {
     ...cat,
     items: cat.items.filter(item => {
       const matchSearch = !searchQuery || item.name_en.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchVeg = !vegOnly || item.is_veg;
+      const matchVeg    = !vegOnly || item.is_veg;
       return matchSearch && matchVeg;
     }),
   })).filter(cat => cat.items.length > 0);
 
   const itemCount = getItemCount();
-  const total = getTotal();
+  const total     = getTotal();
 
   if (isLoading) return (
     <div className="min-h-screen bg-[#0F0F0F] px-4 pt-10 animate-pulse">
@@ -96,6 +96,7 @@ export default function MenuPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e]/80 to-[#0F0F0F]" />
         <div className="relative px-4 pt-10 pb-6 text-center">
+
           {restaurant.logo_url && (
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
@@ -105,6 +106,7 @@ export default function MenuPage() {
               className="w-20 h-20 rounded-3xl mx-auto mb-4 border-2 border-white/10 object-cover"
             />
           )}
+
           <motion.h1
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -113,6 +115,7 @@ export default function MenuPage() {
           >
             {restaurant.name}
           </motion.h1>
+
           {tableId && (
             <motion.div
               initial={{ y: 10, opacity: 0 }}
@@ -124,7 +127,8 @@ export default function MenuPage() {
               Table {tableId}
             </motion.div>
           )}
-          {/* Customer identity + My Orders */}
+
+          {/* Customer identity + My Orders — single row, no duplicates */}
           <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
             {isLoggedIn() ? (
               <>
@@ -133,7 +137,7 @@ export default function MenuPage() {
                 </div>
                 <button
                   onClick={() => navigate('/my-orders/' + slug)}
-                  className="inline-flex items-center gap-1.5 bg-[#e94560]/15 border border-[#e94560]/30 text-[#e94560] px-3 py-1 rounded-full text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 bg-[#e94560]/15 border border-[#e94560]/30 text-[#e94560] px-3 py-1 rounded-full text-xs font-semibold hover:bg-[#e94560]/25 transition-colors"
                 >
                   📋 My Orders
                 </button>
@@ -141,21 +145,16 @@ export default function MenuPage() {
             ) : (
               <button
                 onClick={() => setShowSignIn(true)}
-                className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 text-white/40 px-3 py-1 rounded-full text-xs"
+                className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 text-white/40 px-3 py-1 rounded-full text-xs hover:bg-white/10 transition-colors"
               >
-                Sign in to track orders
+                Sign in to track orders →
               </button>
             )}
-            <button onClick={() => navigate(`/my-orders/${slug}`)}
-  className="text-white/50 text-xs border border-white/10 px-3 py-1.5 rounded-xl hover:text-white transition-colors">
-  📋 My Orders
-</button>
-
           </div>
         </div>
       </div>
 
-      {/* Search + Filter + Category pills */}
+      {/* Search + Veg filter */}
       <div className="sticky top-0 z-30 bg-[#0F0F0F]/95 backdrop-blur-xl px-4 py-3 border-b border-white/5">
         <div className="flex gap-2 items-center">
           <div className="flex-1 relative">
@@ -172,7 +171,9 @@ export default function MenuPage() {
           </div>
           <button
             onClick={() => setVegOnly(!vegOnly)}
-            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${vegOnly ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'border-white/10 text-white/50'}`}
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+              vegOnly ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'border-white/10 text-white/50'
+            }`}
           >
             <span className="w-3 h-3 rounded-sm border-2 border-current" /> Veg
           </button>
@@ -229,27 +230,37 @@ export default function MenuPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: ii * 0.04 }}
-                  className={`flex gap-3 bg-white/5 border rounded-2xl p-3 cursor-pointer transition-all hover:bg-white/8 ${highlightedItemId === item.id ? "border-[#e94560]/60 bg-[#e94560]/5 scale-[1.01]" : "border-white/5"}`}
+                  className={`flex gap-3 bg-white/5 border rounded-2xl p-3 cursor-pointer transition-all hover:bg-white/8 ${
+                    highlightedItemId === item.id
+                      ? 'border-[#e94560]/60 bg-[#e94560]/5 scale-[1.01]'
+                      : 'border-white/5'
+                  }`}
                   onClick={() => setSelectedItem(item)}
                 >
                   <div className="flex-1 min-w-0">
+                    {/* Veg / Non-veg dot */}
                     <div className={`w-3.5 h-3.5 rounded-sm border-2 mb-1 ${item.is_veg ? 'border-green-500' : 'border-red-500'}`}>
                       <div className={`w-1.5 h-1.5 rounded-full m-px ${item.is_veg ? 'bg-green-500' : 'bg-red-500'}`} />
                     </div>
+
                     <h3 className="font-bold text-sm leading-tight mb-1 line-clamp-1">{item.name_en}</h3>
+
                     {item.description_en && (
                       <p className="text-xs text-white/40 line-clamp-2 mb-2">{item.description_en}</p>
                     )}
+
                     {/* Combo contents preview */}
                     {item.is_combo && parseComboItems(item.combo_items).length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {parseComboItems(item.combo_items).map((ci, idx) => (
+                        {parseComboItems(item.combo_items).map((comboItem, idx) => (
                           <span key={idx} className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-2 py-0.5 rounded-full">
-                            {ci.qty > 1 ? `${ci.qty}× ` : ''}{ci.name}
+                            {comboItem.qty > 1 ? `${comboItem.qty}× ` : ''}{comboItem.name}
                           </span>
                         ))}
                       </div>
                     )}
+
+                    {/* Price */}
                     <div className="flex items-center gap-2 flex-wrap">
                       {(() => {
                         const dp = Number(item.discounted_price);
@@ -270,29 +281,36 @@ export default function MenuPage() {
                         <span className="text-white/25 text-xs">· {item.preparation_time_mins}m</span>
                       )}
                       {item.is_combo && (
-                        <span className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-1.5 py-0.5 rounded-full">🎁 Combo</span>
+                        <span className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-1.5 py-0.5 rounded-full">
+                          🎁 Combo
+                        </span>
                       )}
                       {item.is_combo && item.combo_savings > 0 && (
-                        <span className="text-xs bg-green-500/15 border border-green-500/25 text-green-400 px-1.5 py-0.5 rounded-full">Save ₹{item.combo_savings}</span>
+                        <span className="text-xs bg-green-500/15 border border-green-500/25 text-green-400 px-1.5 py-0.5 rounded-full">
+                          Save ₹{item.combo_savings}
+                        </span>
                       )}
                     </div>
                   </div>
 
+                  {/* Image + Add button */}
                   <div className="relative flex-shrink-0">
                     <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5">
-                      {item.image_url
-                        ? <img
-                            src={item.image_url}
-                            alt={item.name_en}
-                            className="w-full h-full object-cover"
-                            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
-                          />
-                        : null
-                      }
-                      <div className="w-full h-full items-center justify-center text-3xl"
-                        style={{ display: item.image_url ? 'none' : 'flex' }}>
-                        🍽
-                      </div>
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name_en}
+                          className="w-full h-full object-cover"
+                          onError={e => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="w-full h-full items-center justify-center text-3xl"
+                        style={{ display: item.image_url ? 'none' : 'flex' }}
+                      >🍽</div>
                     </div>
                     <button
                       onClick={e => {
@@ -335,7 +353,7 @@ export default function MenuPage() {
         )}
       </AnimatePresence>
 
-      {/* slug prop added to fix waiter-call 404 */}
+      {/* Waiter call button */}
       {tableId && (
         <WaiterButton
           restaurantId={restaurant.id}
@@ -344,6 +362,7 @@ export default function MenuPage() {
         />
       )}
 
+      {/* Cart drawer */}
       <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -354,6 +373,7 @@ export default function MenuPage() {
         upiOnly={tableUpiOnly}
       />
 
+      {/* Item detail modal */}
       <ItemModal
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
@@ -362,8 +382,6 @@ export default function MenuPage() {
           toast.success(`${item.name_en} added!`);
         }}
       />
-
-
 
       {/* Customer sign-in sheet */}
       {showSignIn && (
