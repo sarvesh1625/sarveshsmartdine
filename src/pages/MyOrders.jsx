@@ -60,7 +60,7 @@ export default function MyOrders() {
               )}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-3">
             {slug && (
               <button
                 onClick={() => navigate(`/menu/${slug}/table/1`)}
