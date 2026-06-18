@@ -225,7 +225,7 @@ export default function MenuManager() {
   });
 
   const updateItem = useMutation({
-    mutationFn: ({ id, data }) => api.patch(`/menu-items/${id}`, data),
+    mutationFn: ({ id, data }) => api.put(`/menu-items/${id}`, data),
     onSuccess: () => { qc.invalidateQueries(['menu-items']); setEditingItem(null); toast.success('Item updated!'); },
     onError: e => toast.error(e.response?.data?.message || 'Failed'),
   });
