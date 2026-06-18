@@ -55,11 +55,15 @@ export default function MenuPage() {
 
   const filteredMenu = data?.menu?.map(cat => ({
     ...cat,
-    items: cat.items.filter(item => {
-      const matchSearch = !searchQuery || item.name_en.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchVeg    = !vegOnly || item.is_veg;
-      return matchSearch && matchVeg;
-    }),
+   items: cat.items.filter(item => {
+  const matchSearch = !searchQuery || item.name_en.toLowerCase().includes(searchQuery.toLowerCase());
+  const matchVeg    = !vegOnly || item.is_veg;
+  return matchSearch && matchVeg;
+}).sort((a, b) => {
+  // Available items first, sold out at bottom
+  if (a.is_available === b.is_available) return 0;
+  return a.is_available ? -1 : 1;
+}),
   })).filter(cat => cat.items.length > 0);
 
   const itemCount = getItemCount();
