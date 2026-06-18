@@ -398,6 +398,7 @@ export default function MenuManager() {
                   onChange={url => setItemForm({...itemForm, image_url: url})}
                 />
               </div>
+              
 
               {/* Combo toggle */}
               <div className="col-span-2">
