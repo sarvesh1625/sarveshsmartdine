@@ -11,7 +11,6 @@ import ItemModal from '../components/menu/ItemModal';
 import WaiterButton from '../components/menu/WaiterButton';
 import CustomerSignIn from '../components/menu/CustomerSignIn';
 
-/* Safe parse combo_items whether string or array from API */
 function parseComboItems(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -22,20 +21,18 @@ export default function MenuPage() {
   const { slug, tableId } = useParams();
   const navigate = useNavigate();
 
-  const [activeCategory,   setActiveCategory]   = useState(null);
-  const [selectedItem,     setSelectedItem]      = useState(null);
-  const [cartOpen,         setCartOpen]          = useState(false);
-  const [searchQuery,      setSearchQuery]       = useState('');
-  const [vegOnly,          setVegOnly]           = useState(false);
-  const [showSignIn,       setShowSignIn]        = useState(false);
+  const [activeCategory,    setActiveCategory]  = useState(null);
+  const [selectedItem,      setSelectedItem]     = useState(null);
+  const [cartOpen,          setCartOpen]         = useState(false);
+  const [searchQuery,       setSearchQuery]      = useState('');
+  const [vegOnly,           setVegOnly]          = useState(false);
+  const [showSignIn,        setShowSignIn]       = useState(false);
   const [highlightedItemId] = useState(null);
 
   const categoryRefs = useRef({});
-
   const { addItem, getItemCount, getTotal, setTableContext } = useCartStore();
   const { customer, isLoggedIn } = useCustomerStore();
 
-  // Fetch restaurant payment settings (UPI ID, pay-first flag)
   const { data: paymentSettings } = useQuery({
     queryKey: ['public-payment', slug, tableId],
     queryFn:  () => axios.get(`/api/v1/restaurant/public/${slug}${tableId ? `?table=${tableId}` : ''}`).then(r => r.data.data),
@@ -44,7 +41,6 @@ export default function MenuPage() {
   const upiId        = paymentSettings?.upi_id      || null;
   const tableUpiOnly = paymentSettings?.tableUpiOnly || false;
 
-  // Fetch menu
   const { data, isLoading, error } = useQuery({
     queryKey: ['menu', slug],
     queryFn:  () => axios.get(`/api/v1/menu-items/public?restaurantSlug=${slug}`).then(r => r.data.data),
@@ -96,7 +92,6 @@ export default function MenuPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e]/80 to-[#0F0F0F]" />
         <div className="relative px-4 pt-10 pb-6 text-center">
-
           {restaurant.logo_url && (
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
@@ -106,7 +101,6 @@ export default function MenuPage() {
               className="w-20 h-20 rounded-3xl mx-auto mb-4 border-2 border-white/10 object-cover"
             />
           )}
-
           <motion.h1
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -115,7 +109,6 @@ export default function MenuPage() {
           >
             {restaurant.name}
           </motion.h1>
-
           {tableId && (
             <motion.div
               initial={{ y: 10, opacity: 0 }}
@@ -127,8 +120,6 @@ export default function MenuPage() {
               Table {tableId}
             </motion.div>
           )}
-
-          {/* Customer identity + My Orders — single row, no duplicates */}
           <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
             {isLoggedIn() ? (
               <>
@@ -154,7 +145,7 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Search + Veg filter */}
+      {/* Search + Veg filter + Category pills */}
       <div className="sticky top-0 z-30 bg-[#0F0F0F]/95 backdrop-blur-xl px-4 py-3 border-b border-white/5">
         <div className="flex gap-2 items-center">
           <div className="flex-1 relative">
@@ -178,8 +169,6 @@ export default function MenuPage() {
             <span className="w-3 h-3 rounded-sm border-2 border-current" /> Veg
           </button>
         </div>
-
-        {/* Category pills */}
         <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           {menu.map(cat => (
             <button
@@ -223,110 +212,144 @@ export default function MenuPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {cat.items.map((item, ii) => (
-                <motion.div
-                  key={item.id}
-                  id={`menu-item-${item.id}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: ii * 0.04 }}
-                  className={`flex gap-3 bg-white/5 border rounded-2xl p-3 cursor-pointer transition-all hover:bg-white/8 ${
-                    highlightedItemId === item.id
-                      ? 'border-[#e94560]/60 bg-[#e94560]/5 scale-[1.01]'
-                      : 'border-white/5'
-                  }`}
-                  onClick={() => setSelectedItem(item)}
-                >
-                  <div className="flex-1 min-w-0">
-                    {/* Veg / Non-veg dot */}
-                    <div className={`w-3.5 h-3.5 rounded-sm border-2 mb-1 ${item.is_veg ? 'border-green-500' : 'border-red-500'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full m-px ${item.is_veg ? 'bg-green-500' : 'bg-red-500'}`} />
-                    </div>
+              {cat.items.map((item, ii) => {
+                const isAvailable = !!item.is_available;
 
-                    <h3 className="font-bold text-sm leading-tight mb-1 line-clamp-1">{item.name_en}</h3>
-
-                    {item.description_en && (
-                      <p className="text-xs text-white/40 line-clamp-2 mb-2">{item.description_en}</p>
-                    )}
-
-                    {/* Combo contents preview */}
-                    {item.is_combo && parseComboItems(item.combo_items).length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {parseComboItems(item.combo_items).map((comboItem, idx) => (
-                          <span key={idx} className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-2 py-0.5 rounded-full">
-                            {comboItem.qty > 1 ? `${comboItem.qty}× ` : ''}{comboItem.name}
-                          </span>
-                        ))}
+                return (
+                  <motion.div
+                    key={item.id}
+                    id={`menu-item-${item.id}`}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: ii * 0.04 }}
+                    className={`flex gap-3 bg-white/5 border rounded-2xl p-3 transition-all ${
+                      !isAvailable
+                        ? 'opacity-60 cursor-not-allowed border-white/5'
+                        : `cursor-pointer hover:bg-white/8 ${
+                            highlightedItemId === item.id
+                              ? 'border-[#e94560]/60 bg-[#e94560]/5 scale-[1.01]'
+                              : 'border-white/5'
+                          }`
+                    }`}
+                    onClick={() => isAvailable && setSelectedItem(item)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      {/* Veg / Non-veg dot */}
+                      <div className={`w-3.5 h-3.5 rounded-sm border-2 mb-1 ${item.is_veg ? 'border-green-500' : 'border-red-500'}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full m-px ${item.is_veg ? 'bg-green-500' : 'bg-red-500'}`} />
                       </div>
-                    )}
 
-                    {/* Price */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {(() => {
-                        const dp = Number(item.discounted_price);
-                        const p  = Number(item.price);
-                        const hasDiscount = !isNaN(dp) && dp > 0 && dp < p;
-                        return (
-                          <>
-                            <span className="text-[#e94560] font-black text-base">
-                              ₹{hasDiscount ? dp : p}
+                      <h3 className="font-bold text-sm leading-tight mb-1 line-clamp-1">{item.name_en}</h3>
+
+                      {item.description_en && (
+                        <p className="text-xs text-white/40 line-clamp-2 mb-2">{item.description_en}</p>
+                      )}
+
+                      {/* Combo contents */}
+                      {item.is_combo && parseComboItems(item.combo_items).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {parseComboItems(item.combo_items).map((comboItem, idx) => (
+                            <span key={idx} className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-2 py-0.5 rounded-full">
+                              {comboItem.qty > 1 ? `${comboItem.qty}× ` : ''}{comboItem.name}
                             </span>
-                            {hasDiscount && (
-                              <span className="text-white/25 text-xs line-through">₹{p}</span>
-                            )}
-                          </>
-                        );
-                      })()}
-                      {item.preparation_time_mins > 0 && (
-                        <span className="text-white/25 text-xs">· {item.preparation_time_mins}m</span>
+                          ))}
+                        </div>
                       )}
-                      {item.is_combo && (
-                        <span className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-1.5 py-0.5 rounded-full">
-                          🎁 Combo
-                        </span>
-                      )}
-                      {item.is_combo && item.combo_savings > 0 && (
-                        <span className="text-xs bg-green-500/15 border border-green-500/25 text-green-400 px-1.5 py-0.5 rounded-full">
-                          Save ₹{item.combo_savings}
-                        </span>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Image + Add button */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.name_en}
-                          className="w-full h-full object-cover"
-                          onError={e => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="w-full h-full items-center justify-center text-3xl"
-                        style={{ display: item.image_url ? 'none' : 'flex' }}
-                      >🍽</div>
+                      {/* Price + badges */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(() => {
+                          const dp = Number(item.discounted_price);
+                          const p  = Number(item.price);
+                          const hasDiscount = !isNaN(dp) && dp > 0 && dp < p;
+                          return (
+                            <>
+                              <span className={`font-black text-base ${isAvailable ? 'text-[#e94560]' : 'text-white/30'}`}>
+                                ₹{hasDiscount ? dp : p}
+                              </span>
+                              {hasDiscount && (
+                                <span className="text-white/25 text-xs line-through">₹{p}</span>
+                              )}
+                            </>
+                          );
+                        })()}
+                        {item.preparation_time_mins > 0 && isAvailable && (
+                          <span className="text-white/25 text-xs">· {item.preparation_time_mins}m</span>
+                        )}
+                        {item.is_combo && isAvailable && (
+                          <span className="text-xs bg-purple-500/15 border border-purple-500/25 text-purple-300 px-1.5 py-0.5 rounded-full">
+                            🎁 Combo
+                          </span>
+                        )}
+                        {item.is_combo && item.combo_savings > 0 && isAvailable && (
+                          <span className="text-xs bg-green-500/15 border border-green-500/25 text-green-400 px-1.5 py-0.5 rounded-full">
+                            Save ₹{item.combo_savings}
+                          </span>
+                        )}
+                        {/* Sold out badge in text row */}
+                        {!isAvailable && (
+                          <span className="text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full font-bold">
+                            🚫 Sold Out
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        addItem(item);
-                        toast.success(`${item.name_en} added!`, { duration: 1500 });
-                      }}
-                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#e94560] hover:bg-[#d63050] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+
+                    {/* Image + Add button */}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 relative">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name_en}
+                            className={`w-full h-full object-cover ${!isAvailable ? 'opacity-40 grayscale' : ''}`}
+                            onError={e => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="w-full h-full items-center justify-center text-3xl"
+                          style={{
+                            display: item.image_url ? 'none' : 'flex',
+                            opacity: isAvailable ? 1 : 0.4,
+                          }}
+                        >🍽</div>
+
+                        {/* Sold out overlay on image */}
+                        {!isAvailable && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/55 rounded-xl">
+                            <span className="text-white text-xs font-black bg-red-500/90 px-2 py-1 rounded-lg">
+                              Sold Out
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add button — available items only */}
+                      {isAvailable ? (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            addItem(item);
+                            toast.success(`${item.name_en} added!`, { duration: 1500 });
+                          }}
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#e94560] hover:bg-[#d63050] rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white/10 border border-white/15 text-white/40 text-xs font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">
+                          Sold out
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.section>
         ))}
@@ -353,7 +376,6 @@ export default function MenuPage() {
         )}
       </AnimatePresence>
 
-      {/* Waiter call button */}
       {tableId && (
         <WaiterButton
           restaurantId={restaurant.id}
@@ -362,7 +384,6 @@ export default function MenuPage() {
         />
       )}
 
-      {/* Cart drawer */}
       <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -373,7 +394,6 @@ export default function MenuPage() {
         upiOnly={tableUpiOnly}
       />
 
-      {/* Item detail modal */}
       <ItemModal
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
@@ -383,7 +403,6 @@ export default function MenuPage() {
         }}
       />
 
-      {/* Customer sign-in sheet */}
       {showSignIn && (
         <CustomerSignIn
           restaurantName={restaurant?.name}
