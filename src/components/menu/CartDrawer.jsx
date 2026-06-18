@@ -27,6 +27,8 @@ export default function CartDrawer({ open, onClose, restaurant, slug, tableId, u
   const [loading,       setLoading]       = useState(false);
   const [orderId,       setOrderId]       = useState(null);
   const [paidTotal,     setPaidTotal]     = useState(0);
+  const [qrData,  setQrData]  = useState(null);
+const [qrError, setQrError] = useState(null);
   // Static UPI QR only — no Razorpay
 
   const subtotal = getTotal();
@@ -424,6 +426,10 @@ export default function CartDrawer({ open, onClose, restaurant, slug, tableId, u
                       Track My Order →
                     </button>
                   )}
+                  <button onClick={() => { handleClose(); navigate(`/my-orders/${slug}`); }}
+  className="w-full border border-white/10 text-white/50 font-semibold py-3 rounded-2xl mb-2">
+  📋 View All My Orders
+</button>
                   <button onClick={handleClose}
                     className="w-full border border-white/10 text-white/50 font-semibold py-3 rounded-2xl">
                     Back to Menu
@@ -435,7 +441,15 @@ export default function CartDrawer({ open, onClose, restaurant, slug, tableId, u
             {/* Footer buttons */}
             <div className="px-5 py-4 border-t border-white/5">
               {step === 'cart' && items.length > 0 && (
-                <button onClick={() => setStep('details')}
+  <button onClick={() => {
+    // If customer already signed in with name+phone, skip details step
+    if (customer?.name && customer.name !== 'Guest' && customer?.phone) {
+      setForm(f => ({ ...f, name: customer.name, phone: customer.phone }));
+      proceedToPayment();
+    } else {
+      setStep('details');
+    }
+  }}
                   className="w-full bg-[#e94560] hover:bg-[#d63050] text-white font-bold py-4 rounded-2xl flex items-center justify-between px-6 shadow-lg shadow-[#e94560]/25">
                   <span>Proceed to Checkout</span>
                   <span>₹{total.toFixed(0)} →</span>

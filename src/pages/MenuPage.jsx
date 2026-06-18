@@ -146,6 +146,10 @@ export default function MenuPage() {
                 Sign in to track orders
               </button>
             )}
+            <button onClick={() => navigate(`/my-orders/${slug}`)}
+  className="text-white/50 text-xs border border-white/10 px-3 py-1.5 rounded-xl hover:text-white transition-colors">
+  📋 My Orders
+</button>
 
           </div>
         </div>
