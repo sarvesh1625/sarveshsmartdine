@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useState, useEffect } from 'react';
 
 const useCustomerStore = create(
   persist(
@@ -14,7 +15,6 @@ const useCustomerStore = create(
         if (newCustomer?.phone) {
           const guestOrders = state.ordersByCustomer['guest'] || [];
           const existingOrders = state.ordersByCustomer[newCustomer.phone] || [];
-          // Merge guest orders + existing orders, deduplicate by orderId, keep latest 20
           const allOrders = [...existingOrders, ...guestOrders];
           const seen = new Set();
           const merged = allOrders.filter(o => {
@@ -28,7 +28,7 @@ const useCustomerStore = create(
             ordersByCustomer: {
               ...state.ordersByCustomer,
               [newCustomer.phone]: merged,
-              guest: [], // clear guest orders after merging
+              guest: [],
             },
           });
         } else {
@@ -43,7 +43,6 @@ const useCustomerStore = create(
       addOrder: (order) => {
         const phone = get().customer?.phone || 'guest';
         const existing = get().ordersByCustomer[phone] || [];
-        // Avoid duplicate orders
         const alreadyExists = existing.some(o => o.orderId === order.orderId);
         if (alreadyExists) return;
         set({
@@ -54,7 +53,6 @@ const useCustomerStore = create(
         });
       },
 
-      // Update order status in history (called from order tracking page)
       updateOrderStatus: (orderId, status) => {
         const state = get();
         const phone = state.customer?.phone || 'guest';
@@ -70,15 +68,12 @@ const useCustomerStore = create(
         });
       },
 
-      // Get orders for current customer
-      // pass slug to filter by restaurant, null for all
       getMyOrders: (slug) => {
         const phone = get().customer?.phone || 'guest';
         const orders = get().ordersByCustomer[phone] || [];
         return slug ? orders.filter(o => o.slug === slug) : orders;
       },
 
-      // Legacy - kept for backwards compat
       getOrdersBySlug: (slug) => {
         return get().getMyOrders(slug);
       },
@@ -87,7 +82,6 @@ const useCustomerStore = create(
     }),
     {
       name: 'smartdine-customer',
-      // Migrate old flat orders array to new format
       onRehydrateStorage: () => (state) => {
         if (state && state.orders && !state.ordersByCustomer) {
           const phone = state.customer?.phone || 'guest';
@@ -98,5 +92,18 @@ const useCustomerStore = create(
     }
   )
 );
+
+// Hook to know when the persisted store has finished loading from localStorage.
+// Prevents flash of "not signed in" UI (like the sign-in sheet) before
+// Zustand has restored the saved customer from localStorage.
+export const useCustomerStoreHydrated = () => {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const unsub = useCustomerStore.persist.onFinishHydration(() => setHydrated(true));
+    if (useCustomerStore.persist.hasHydrated()) setHydrated(true);
+    return unsub;
+  }, []);
+  return hydrated;
+};
 
 export default useCustomerStore;

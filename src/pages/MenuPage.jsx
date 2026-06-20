@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import useCartStore from '../store/cartStore';
-import useCustomerStore from '../store/customerStore';
+import useCustomerStore, { useCustomerStoreHydrated } from '../store/customerStore';
 import CartDrawer from '../components/menu/CartDrawer';
 import ItemModal from '../components/menu/ItemModal';
 import WaiterButton from '../components/menu/WaiterButton';
@@ -32,6 +32,7 @@ export default function MenuPage() {
   const categoryRefs = useRef({});
   const { addItem, getItemCount, getTotal, setTableContext } = useCartStore();
   const { customer, isLoggedIn } = useCustomerStore();
+  const isHydrated = useCustomerStoreHydrated(); // true once customerStore has loaded from localStorage
 
   const { data: paymentSettings } = useQuery({
     queryKey: ['public-payment', slug, tableId],
@@ -50,20 +51,25 @@ export default function MenuPage() {
   useEffect(() => {
     if (data && tableId) setTableContext(data.restaurant.id, tableId);
     if (data?.menu?.length) setActiveCategory(data.menu[0].id);
-    if (data && !isLoggedIn()) setShowSignIn(true);
-  }, [data]);
+    // Only decide whether to show the sign-in sheet AFTER the customer store
+    // has finished hydrating from localStorage. Without this guard, isLoggedIn()
+    // can momentarily return false on first render (before hydration completes),
+    // incorrectly showing the sign-in sheet to an already-signed-in customer —
+    // e.g. when navigating back from the order tracking page.
+    if (data && isHydrated && !isLoggedIn()) setShowSignIn(true);
+  }, [data, isHydrated]);
 
   const filteredMenu = data?.menu?.map(cat => ({
     ...cat,
-   items: cat.items.filter(item => {
-  const matchSearch = !searchQuery || item.name_en.toLowerCase().includes(searchQuery.toLowerCase());
-  const matchVeg    = !vegOnly || item.is_veg;
-  return matchSearch && matchVeg;
-}).sort((a, b) => {
-  // Available items first, sold out at bottom
-  if (a.is_available === b.is_available) return 0;
-  return a.is_available ? -1 : 1;
-}),
+    items: cat.items.filter(item => {
+      const matchSearch = !searchQuery || item.name_en.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchVeg    = !vegOnly || item.is_veg;
+      return matchSearch && matchVeg;
+    }).sort((a, b) => {
+      // Available items first, sold out items pushed to the bottom
+      if (a.is_available === b.is_available) return 0;
+      return a.is_available ? -1 : 1;
+    }),
   })).filter(cat => cat.items.length > 0);
 
   const itemCount = getItemCount();
@@ -238,7 +244,6 @@ export default function MenuPage() {
                     onClick={() => isAvailable && setSelectedItem(item)}
                   >
                     <div className="flex-1 min-w-0">
-                      {/* Veg / Non-veg dot */}
                       <div className={`w-3.5 h-3.5 rounded-sm border-2 mb-1 ${item.is_veg ? 'border-green-500' : 'border-red-500'}`}>
                         <div className={`w-1.5 h-1.5 rounded-full m-px ${item.is_veg ? 'bg-green-500' : 'bg-red-500'}`} />
                       </div>
@@ -249,7 +254,6 @@ export default function MenuPage() {
                         <p className="text-xs text-white/40 line-clamp-2 mb-2">{item.description_en}</p>
                       )}
 
-                      {/* Combo contents */}
                       {item.is_combo && parseComboItems(item.combo_items).length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
                           {parseComboItems(item.combo_items).map((comboItem, idx) => (
@@ -260,7 +264,6 @@ export default function MenuPage() {
                         </div>
                       )}
 
-                      {/* Price + badges */}
                       <div className="flex items-center gap-2 flex-wrap">
                         {(() => {
                           const dp = Number(item.discounted_price);
@@ -290,7 +293,6 @@ export default function MenuPage() {
                             Save ₹{item.combo_savings}
                           </span>
                         )}
-                        {/* Sold out badge in text row */}
                         {!isAvailable && (
                           <span className="text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full font-bold">
                             🚫 Sold Out
@@ -299,7 +301,6 @@ export default function MenuPage() {
                       </div>
                     </div>
 
-                    {/* Image + Add button */}
                     <div className="relative flex-shrink-0">
                       <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 relative">
                         {item.image_url ? (
@@ -321,7 +322,6 @@ export default function MenuPage() {
                           }}
                         >🍽</div>
 
-                        {/* Sold out overlay on image */}
                         {!isAvailable && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/55 rounded-xl">
                             <span className="text-white text-xs font-black bg-red-500/90 px-2 py-1 rounded-lg">
@@ -331,7 +331,6 @@ export default function MenuPage() {
                         )}
                       </div>
 
-                      {/* Add button — available items only */}
                       {isAvailable ? (
                         <button
                           onClick={e => {
