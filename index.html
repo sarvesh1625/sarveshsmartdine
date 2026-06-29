@@ -3,13 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MenuCloud</title>
+    <title>SmartDine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height:100vh;background:#0F0F0F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#FF2D55,#FF6B35);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:serif;font-weight:800;font-size:22px;color:#fff;margin-bottom:4px;">S</div>
+        <div style="width:40px;height:40px;border:3px solid rgba(233,69,96,0.2);border-top-color:#e94560;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <p style="color:rgba(255,255,255,0.35);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;margin:0;">Loading menu...</p>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
