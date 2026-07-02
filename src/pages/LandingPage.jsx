@@ -90,14 +90,14 @@ function LegalModal({ type, onClose }) {
       title: 'Terms of Service',
       updated: 'Last updated: June 2026',
       sections: [
-        { heading: 'Acceptance of Terms', body: 'By registering and using SmartDine, you agree to these Terms of Service. If you do not agree to these terms, please do not use our platform.' },
-        { heading: 'Use of Service', body: 'SmartDine provides a restaurant management platform including digital menus, order management, kitchen display, and analytics. You may use the service only for lawful purposes and in accordance with these Terms.' },
+        { heading: 'Acceptance of Terms', body: 'By registering and using MenuVia, you agree to these Terms of Service. If you do not agree to these terms, please do not use our platform.' },
+        { heading: 'Use of Service', body: 'MenuVia provides a restaurant management platform including digital menus, order management, kitchen display, and analytics. You may use the service only for lawful purposes and in accordance with these Terms.' },
         { heading: 'Account Responsibility', body: 'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Notify us immediately of any unauthorized use.' },
         { heading: 'Free Trial', body: 'New restaurants receive a 15-day free trial of all Pro features. After the trial, your account reverts to the Free plan unless you upgrade. No credit card is required for the trial.' },
         { heading: 'Payment & Billing', body: 'Paid plans are billed monthly. Payments are processed securely via Razorpay. All prices are in Indian Rupees and inclusive of applicable taxes.' },
         { heading: 'Refunds', body: 'Please refer to our Refund Policy for details on cancellations and refunds.' },
         { heading: 'Termination', body: 'We reserve the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity. You may cancel your subscription at any time from your dashboard.' },
-        { heading: 'Limitation of Liability', body: 'SmartDine shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use of the service.' },
+        { heading: 'Limitation of Liability', body: 'MenuVia shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use of the service.' },
         { heading: 'Governing Law', body: 'These Terms shall be governed by the laws of India. Any disputes shall be subject to the jurisdiction of courts in Andhra Pradesh, India.' },
         { heading: 'Contact', body: 'For terms-related queries, contact us at sarveshthokala1625@gmail.com.' },
       ],
@@ -106,10 +106,10 @@ function LegalModal({ type, onClose }) {
       title: 'Refund Policy',
       updated: 'Last updated: June 2026',
       sections: [
-        { heading: 'Overview', body: 'We want you to be satisfied with SmartDine. This policy outlines when refunds are issued.' },
+        { heading: 'Overview', body: 'We want you to be satisfied with MenuVia. This policy outlines when refunds are issued.' },
         { heading: 'Free Trial', body: 'All new restaurants receive a 15-day free trial. No payment is required during the trial period, so no refund is applicable.' },
         { heading: 'Monthly Subscriptions', body: 'Monthly subscription payments are non-refundable once the billing period has started. You can cancel at any time and retain access until the end of the paid period.' },
-        { heading: 'Exceptional Circumstances', body: 'If you experience a technical issue caused by SmartDine that significantly impairs your ability to use the service, contact us within 7 days. We will review the situation and may issue a full or partial refund at our discretion.' },
+        { heading: 'Exceptional Circumstances', body: 'If you experience a technical issue caused by MenuVia that significantly impairs your ability to use the service, contact us within 7 days. We will review the situation and may issue a full or partial refund at our discretion.' },
         { heading: 'Duplicate Payments', body: 'If you are charged twice for the same billing period due to a technical error, we will promptly refund the duplicate charge.' },
         { heading: 'How to Request a Refund', body: 'Email sarveshthokala1625@gmail.com with your registered email, the date of payment, and the reason for the refund request. We respond within 2 business days.' },
         { heading: 'Processing Time', body: 'Approved refunds are processed within 5–7 business days and credited to your original payment method via Razorpay.' },
@@ -119,11 +119,11 @@ function LegalModal({ type, onClose }) {
       title: 'Cookie Policy',
       updated: 'Last updated: June 2026',
       sections: [
-        { heading: 'What Are Cookies', body: 'Cookies are small text files stored on your device when you visit a website. We use cookies to make SmartDine work correctly and securely.' },
+        { heading: 'What Are Cookies', body: 'Cookies are small text files stored on your device when you visit a website. We use cookies to make MenuVia work correctly and securely.' },
         { heading: 'Cookies We Use', body: 'We use only essential cookies: authentication tokens to keep you logged in, and session cookies to maintain your admin dashboard state. We do not use advertising, tracking, or analytics cookies.' },
         { heading: 'Third-Party Cookies', body: 'Our payment provider Razorpay may set cookies during the payment process. We do not control these cookies. Please refer to Razorpay\'s cookie policy for details.' },
         { heading: 'Managing Cookies', body: 'You can control or delete cookies through your browser settings. Note that disabling essential cookies will prevent you from logging into the admin dashboard.' },
-        { heading: 'No Advertising', body: 'SmartDine does not use advertising cookies and does not share your browsing data with advertisers.' },
+        { heading: 'No Advertising', body: 'MenuVia does not use advertising cookies and does not share your browsing data with advertisers.' },
         { heading: 'Contact', body: 'For cookie-related queries, email us at sarveshthokala1625@gmail.com.' },
       ],
     },
@@ -158,7 +158,7 @@ function LegalModal({ type, onClose }) {
           ))}
           <div style={{ marginTop: 32, padding: '20px 24px', background: 'rgba(255,45,85,0.06)', border: '1px solid rgba(255,45,85,0.15)', borderRadius: 16 }}>
             <p style={{ fontSize: 13, color: 'rgba(245,245,247,0.5)', lineHeight: 1.7 }}>
-              <strong style={{ color: 'rgba(245,245,247,0.8)' }}>SmartDine</strong> is operated by Tokala Sarveswara Rao.<br />
+              <strong style={{ color: 'rgba(245,245,247,0.8)' }}>MenuVia</strong> is operated by Tokala Sarveswara Rao.<br />
               📧 sarveshthokala1625@gmail.com &nbsp;·&nbsp; 📍 Andhra Pradesh, India
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #FF2D55, #FF6B35)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 18, color: '#fff', boxShadow: '0 4px 16px rgba(255,45,85,0.4)' }}>S</div>
-            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 20, color: '#fff', letterSpacing: '-0.5px' }}>Smart<span style={{ color: '#FF2D55' }}>Dine</span></span>
+            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 20, color: '#fff', letterSpacing: '-0.5px' }}>Menu<span style={{ color: '#FF2D55' }}>Via</span></span>
           </div>
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {NAV.map(n => <button key={n.id} className="nav-link" onClick={() => goTo(n.id)}>{n.label}</button>)}
@@ -315,7 +315,7 @@ export default function LandingPage() {
                     <div key={i} style={{ width: 30, height: 30, borderRadius: '50%', background: `hsl(${i*40+10}, 70%, 50%)`, border: '2px solid #060608', marginLeft: i > 0 ? -10 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>{l}</div>
                   ))}
                 </div>
-                <span style={{ fontSize: 13, color: C.textMuted }}><span style={{ color: '#F5F5F7', fontWeight: 600 }}>500+</span> restaurants trust SmartDine</span>
+                <span style={{ fontSize: 13, color: C.textMuted }}><span style={{ color: '#F5F5F7', fontWeight: 600 }}>500+</span> restaurants trust MenuVia</span>
               </div>
             </div>
             <div className="hide-mobile" style={{ position: 'relative', height: 520 }}>
@@ -559,7 +559,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1240, margin: '0 auto' }}>
           <Reveal>
             <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', color: '#F5F5F7', textAlign: 'center', marginBottom: 56, letterSpacing: '-0.5px' }}>
-              Restaurants across India love SmartDine
+              Restaurants across India love MenuVia
             </h2>
           </Reveal>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
@@ -653,7 +653,7 @@ export default function LandingPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #FF2D55, #FF6B35)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 16, color: '#fff' }}>S</div>
-                <span style={{ fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 18, color: '#fff' }}>SmartDine</span>
+                <span style={{ fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 18, color: '#fff' }}>MenuVia</span>
               </div>
               <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, maxWidth: 220 }}>India's smartest restaurant digital ordering platform. Made with ❤️ in Andhra Pradesh.</p>
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -708,7 +708,7 @@ export default function LandingPage() {
             ))}
           </div>
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <span style={{ fontSize: 13, color: C.textDim }}>© 2026 SmartDine by Tokala Sarveswara Rao. All rights reserved.</span>
+            <span style={{ fontSize: 13, color: C.textDim }}>© 2026 MenuVia by Tokala Sarveswara Rao. All rights reserved.</span>
             <span style={{ fontSize: 13, color: C.textDim }}>Built for Tier-2 & Tier-3 India 🇮🇳</span>
           </div>
         </div>
