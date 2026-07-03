@@ -1,22 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Basic -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MenuVia</title>
+
+    <!-- Primary SEO -->
+    <title>MenuVia | QR Ordering System & Digital Menu for Restaurants</title>
+
+    <meta
+      name="description"
+      content="MenuVia is a smart QR ordering and digital menu platform for restaurants, cafes, hotels, and food businesses. Create contactless QR menus, accept online orders, and improve customer experience."
+    />
+
+    <meta
+      name="keywords"
+      content="MenuVia, QR Ordering, QR Menu, Digital Menu, Restaurant QR Menu, Contactless Ordering, Online Menu, QR Code Menu, Restaurant Ordering System, Cafe QR Menu"
+    />
+
+    <meta name="author" content="MenuVia" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://www.menuvia.in/" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#FF2D55" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MenuVia" />
+    <meta
+      property="og:title"
+      content="MenuVia | QR Ordering System & Digital Menu"
+    />
+    <meta
+      property="og:description"
+      content="Modern QR ordering and digital menu platform for restaurants, cafes, hotels and food businesses."
+    />
+    <meta property="og:url" content="https://www.menuvia.in/" />
+    <meta
+      property="og:image"
+      content="https://www.menuvia.in/og-image.jpg"
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="MenuVia | QR Ordering System"
+    />
+    <meta
+      name="twitter:description"
+      content="Digital Menu & QR Ordering Platform for Restaurants."
+    />
+    <meta
+      name="twitter:image"
+      content="https://www.menuvia.in/og-image.jpg"
+    />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MenuVia",
+        "url": "https://www.menuvia.in/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "MenuVia provides QR ordering, digital menus, and contactless ordering solutions for restaurants, cafes, hotels, and food businesses.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "INR"
+        }
+      }
+    </script>
   </head>
+
   <body>
     <div id="root">
-      <div style="min-height:100vh;background:#0F0F0F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
-        <div style="width:44px;height:44px;background:linear-gradient(135deg,#FF2D55,#FF6B35);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:serif;font-weight:800;font-size:22px;color:#fff;margin-bottom:4px;">S</div>
-        <div style="width:40px;height:40px;border:3px solid rgba(233,69,96,0.2);border-top-color:#e94560;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-        <p style="color:rgba(255,255,255,0.35);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;margin:0;">Loading menu...</p>
+      <div
+        style="
+          min-height: 100vh;
+          background: #0f0f0f;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+        "
+      >
+        <div
+          style="
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #ff2d55, #ff6b35);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 4px;
+          "
+        >
+          M
+        </div>
+
+        <div
+          style="
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(233, 69, 96, 0.2);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          "
+        ></div>
+
+        <p
+          style="
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            margin: 0;
+          "
+        >
+          Loading MenuVia...
+        </p>
       </div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+      <style>
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
     </div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
