@@ -258,8 +258,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #FF2D55, #FF6B35)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 18, color: '#fff', boxShadow: '0 4px 16px rgba(255,45,85,0.4)' }}>S</div>
-            
+            <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783176548/Logo_guszj5.png" alt="MenuVia" style={{ height: 42, width: 'auto', objectFit: 'contain' }} />
           </div>
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {NAV.map(n => <button key={n.id} className="nav-link" onClick={() => goTo(n.id)}>{n.label}</button>)}
@@ -657,8 +656,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #FF2D55, #FF6B35)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display'", fontWeight: 800, fontSize: 16, color: '#fff' }}>S</div>
-                <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783175688/Logo_guszj5.png" alt="MenuVia" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+                <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783176548/Logo_guszj5.png" alt="MenuVia" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
               </div>
               <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, maxWidth: 220 }}>India's smartest restaurant digital ordering platform. Made with ❤️ in Andhra Pradesh.</p>
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
