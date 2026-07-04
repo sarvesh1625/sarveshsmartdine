@@ -258,7 +258,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783177477/Logo_guszj5.png" alt="MenuVia" style={{ height: 42, width: 'auto', objectFit: 'contain' }} />
+            <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783177477/Logo_guszj5.png" alt="MenuVia" style={{ height: 56, width: 'auto', objectFit: 'contain' }} />
           </div>
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {NAV.map(n => <button key={n.id} className="nav-link" onClick={() => goTo(n.id)}>{n.label}</button>)}
@@ -656,7 +656,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783176548/Logo_guszj5.png" alt="MenuVia" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
+                <img src="https://res.cloudinary.com/dummgu0pr/image/upload/v1783176548/Logo_guszj5.png" alt="MenuVia" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
               </div>
               <p style={{ fontSize: 13, color: C.textDim, lineHeight: 1.7, maxWidth: 220 }}>India's smartest restaurant digital ordering platform. Made with ❤️ in Andhra Pradesh.</p>
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
