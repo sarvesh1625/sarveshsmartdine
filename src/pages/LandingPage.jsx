@@ -256,7 +256,7 @@ export default function LandingPage() {
         borderBottom: navScrolled ? `1px solid ${C.border}` : 'none',
         transition: 'all 0.4s ease',
       }}>
-        <div style={{ maxWidth: 1240, margin: '0 auto', padding: '10px 34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
+        <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img src="https://res.cloudinary.com/dxdjlyq72/image/upload/v1783751167/Menuvia_Logo_f3eqa1.png" alt="MenuVia" style={{ height: 64, width: 'auto', objectFit: 'contain', paddingTop: 10 }} />
           </div>
