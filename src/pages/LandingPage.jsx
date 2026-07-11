@@ -258,7 +258,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', padding: '10px 34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="https://res.cloudinary.com/dxdjlyq72/image/upload/v1783751167/Menuvia_Logo_f3eqa1.png" alt="MenuVia" style={{ height: 64, width: 'auto', objectFit: 'contain' }} />
+            <img src="https://res.cloudinary.com/dxdjlyq72/image/upload/v1783751167/Menuvia_Logo_f3eqa1.png" alt="MenuVia" style={{ height: 64, width: 'auto', objectFit: 'contain', paddingTop: 10 }} />
           </div>
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {NAV.map(n => <button key={n.id} className="nav-link" onClick={() => goTo(n.id)}>{n.label}</button>)}
