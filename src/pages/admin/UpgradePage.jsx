@@ -19,7 +19,7 @@ const PLANS = [
   {
     key:     'pro',
     name:    'Pro',
-    price:   '₹999',
+    price:   '499',
     amount:  99900,
     period:  '/month',
     color:   'border-[#e94560]/40 bg-[#e94560]/6',
@@ -29,7 +29,7 @@ const PLANS = [
   {
     key:     'enterprise',
     name:    'Enterprise',
-    price:   '₹2,999',
+    price:   '₹1699',
     amount:  299900,
     period:  '/month',
     color:   'border-purple-500/40 bg-purple-500/6',
