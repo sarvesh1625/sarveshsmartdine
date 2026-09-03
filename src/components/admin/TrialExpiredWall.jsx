@@ -31,22 +31,22 @@ export default function TrialExpiredWall() {
         {/* Plan cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {[
-            {
-              name: 'Pro',
-              price: '₹999',
-              period: '/month',
-              color: 'border-[#e94560]/40 bg-[#e94560]/8',
-              badge: 'Most Popular',
-              features: ['Unlimited tables & items', 'UPI payments', 'Analytics', 'AI ordering', 'Multi-language'],
-            },
-            {
-              name: 'Enterprise',
-              price: '₹2,999',
-              period: '/month',
-              color: 'border-purple-500/40 bg-purple-500/8',
-              badge: 'For chains',
-              features: ['Everything in Pro', 'Multi-branch', 'Custom domain', 'Dedicated support', 'API access'],
-            },
+         {
+  name: 'Pro',
+  price: '₹499',
+  period: '/month',
+  color: 'border-[#e94560]/40 bg-[#e94560]/8',
+  badge: 'Most Popular',
+  features: ['Unlimited tables & items', 'UPI payments', 'Analytics', 'AI ordering', 'Multi-language'],
+},
+{
+  name: 'Enterprise',
+  price: '₹1,699',
+  period: '/month',
+  color: 'border-purple-500/40 bg-purple-500/8',
+  badge: 'For chains',
+  features: ['Everything in Pro', 'Multi-branch', 'Custom domain', 'Dedicated support', 'API access'],
+},
           ].map(plan => (
             <div key={plan.name} className={`rounded-2xl border p-4 text-left ${plan.color}`}>
               <div className="flex items-center justify-between mb-1">
@@ -84,9 +84,9 @@ export default function TrialExpiredWall() {
           Sign out
         </button>
 
-        <p className="text-white/20 text-xs mt-4">
-          Questions? Contact us at hello@smartdine.in
-        </p>
+       <p className="text-white/20 text-xs mt-4">
+  Questions? Contact us at sarveshthokala1625@gmail.com
+</p>
       </motion.div>
     </div>
   );
