@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getSocketUrl } from '../utils/socketUrl';
 
 const STATUS_STEPS = [
   { key: 'placed',    icon: '📋', label: 'Order Placed',   desc: 'We received your order'          },
@@ -30,7 +31,7 @@ export default function OrderTrackingPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['order-track', orderId],
     queryFn:  () => axios.get(`/api/v1/orders/track/${orderId}`).then(r => r.data.data),
-    refetchInterval: 15000, // poll every 15s as backup
+    refetchInterval: 15000, // poll every 15s as backup — catches updates even if socket drops
     retry: 2,
   });
 
@@ -42,11 +43,14 @@ export default function OrderTrackingPage() {
     }
   }, [data?.status]);
 
-  /* ── Real-time Socket.io connection ── */
+  /* ── Real-time Socket.io connection ──
+     Connects directly to the backend (not through the Vercel proxy) since
+     Socket.io/WebSockets cannot travel through the /api rewrite the way
+     normal HTTP requests do. */
   useEffect(() => {
     if (!orderId) return;
 
-    const socket = io('/', {
+    const socket = io(getSocketUrl(), {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
@@ -80,6 +84,8 @@ export default function OrderTrackingPage() {
           style: { background: '#1A1A1A', color: '#fff', border: '1px solid rgba(34,197,94,0.3)' },
           duration: 4000,
         });
+        // Vibrate on mobile if supported, to grab attention even if phone is face-down
+        try { navigator.vibrate?.([200, 100, 200]); } catch {}
       } else if (status === 'preparing') {
         toast('👨‍🍳 Kitchen has started preparing your order!', {
           style: { background: '#1A1A1A', color: '#fff', border: '1px solid rgba(249,115,22,0.3)' },

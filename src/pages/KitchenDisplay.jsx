@@ -6,6 +6,7 @@ import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import { getSocketUrl } from '../utils/socketUrl';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 
@@ -93,7 +94,8 @@ export default function KitchenDisplay() {
 
   // Socket connection
   useEffect(() => {
-    const s = io('/', { auth: { token: accessToken } });
+    // const s = io('/', { auth: { token: accessToken } });
+    const s = io(getSocketUrl(), { auth: { token: accessToken } });
     s.on('connect',    () => setConnected(true));
     s.on('disconnect', () => setConnected(false));
     s.on('new_order',  () => {

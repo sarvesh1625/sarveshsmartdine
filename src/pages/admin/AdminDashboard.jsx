@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import api from '../../services/api';
+import { getSocketUrl } from '../../utils/socketUrl';
 import OrdersPage       from './OrdersPage';
 import MenuManager      from './MenuManager';
 import TablesPage       from './TablesPage';
@@ -22,8 +25,13 @@ const NAV = [
   { to: '/admin/analytics', icon: '📊', label: 'Analytics'},
   { to: '/admin/settings',  icon: '⚙️',  label: 'Settings'},
   { to: '/admin/bookings',  icon: '📅',  label: 'Bookings'},
-
 ];
+
+const WAITER_LABELS = {
+  waiter: { icon: '🙋', label: 'Waiter called',      color: 'rgba(233,69,96,0.3)' },
+  water:  { icon: '💧', label: 'Water requested',    color: 'rgba(59,130,246,0.3)' },
+  bill:   { icon: '🧾', label: 'Bill requested',      color: 'rgba(234,179,8,0.3)' },
+};
 
 function Sidebar({ onClose }) {
   const { user, logout, refreshPlan } = useAuthStore();
@@ -35,7 +43,6 @@ function Sidebar({ onClose }) {
   const activePlan   = sidebarBilling?.planType || user?.planType || 'free';
   const isEnterprise = activePlan === 'enterprise';
 
-  // Sync user planType on mount if stale
   useEffect(() => { refreshPlan?.(); }, []);
   const navigate = useNavigate();
 
@@ -43,21 +50,6 @@ function Sidebar({ onClose }) {
     await logout();
     navigate('/admin/login');
   }
-
-  const { switchToBranch } = useAuthStore();
-
-  async function switchToMain() {
-    try {
-      // Switch back to root restaurant
-      const { data } = await api.post('/restaurant/switch-branch', { branchId: user?.restaurantId });
-      switchToBranch(data.data.accessToken, data.data.refreshToken, data.data.user);
-      navigate('/admin/branches');
-      window.location.reload(); // force fresh state
-    } catch { navigate('/admin/branches'); }
-  }
-
-  // Detect if currently in a branch (has parentRestaurantId or branch_name)
-  const isInBranch = !!user?.branchName || user?.restaurantName?.includes(' - ');
 
   return (
     <aside className="flex flex-col h-full w-60 bg-[#111] border-r border-white/5">
@@ -129,6 +121,9 @@ function Sidebar({ onClose }) {
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { accessToken } = useAuthStore();
+  const qc = useQueryClient();
+  const audioCtxRef = useRef(null);
 
   const { data: billing } = useQuery({
     queryKey: ['billing-status'],
@@ -136,6 +131,88 @@ export default function AdminDashboard() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  // Unlock audio on first user interaction (browsers block autoplay sound)
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+      } catch {}
+    };
+    window.addEventListener('click', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
+  }, []);
+
+  function beep() {
+    try {
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      [740, 988].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.15;
+        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.start(t); osc.stop(t + 0.25);
+      });
+    } catch {}
+  }
+
+  // ── Global socket connection — active on every admin page ──
+  // Listens for waiter/water/bill calls and new orders so notifications
+  // work no matter which admin page the user is currently viewing.
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const socket = io(getSocketUrl(), {
+      auth: { token: accessToken },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+    });
+
+    socket.on('waiter_call', (data) => {
+      const info = WAITER_LABELS[data.type] || WAITER_LABELS.waiter;
+      beep();
+      toast(
+        `${info.icon} ${info.label} — Table ${data.tableNumber || '?'}`,
+        {
+          duration: 8000,
+          style: {
+            background: '#1A1A1A',
+            color: '#fff',
+            border: `1px solid ${info.color}`,
+            fontWeight: 700,
+          },
+        }
+      );
+    });
+
+    socket.on('new_order', () => {
+      qc.invalidateQueries(['recent-orders']);
+      qc.invalidateQueries(['analytics-summary']);
+      beep();
+      toast('🔔 New order received!', {
+        duration: 5000,
+        style: { background: '#1A1A1A', color: '#fff', border: '1px solid rgba(233,69,96,0.3)', fontWeight: 700 },
+      });
+    });
+
+    socket.on('order_updated', () => {
+      qc.invalidateQueries(['recent-orders']);
+    });
+
+    return () => socket.disconnect();
+  }, [accessToken]);
 
   // Show trial expired wall if trial is over and not on paid plan
   if (billing && !billing.hasAccess) {
