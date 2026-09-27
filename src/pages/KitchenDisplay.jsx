@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -32,7 +32,6 @@ function Timer({ createdAt }) {
       const mins = dayjs().diff(dayjs(createdAt), 'minute');
       const secs = dayjs().diff(dayjs(createdAt), 'second') % 60;
       setElapsed(`${mins}:${String(secs).padStart(2,'0')}`);
-      // Only urgent if order is from today
       const isToday = dayjs(createdAt).isAfter(dayjs().startOf('day'));
       setUrgent(isToday && mins >= 15);
     }
@@ -92,9 +91,8 @@ export default function KitchenDisplay() {
     } catch {}
   }
 
-  // Socket connection
+  // Socket connection — connects directly to the backend
   useEffect(() => {
-    // const s = io('/', { auth: { token: accessToken } });
     const s = io(getSocketUrl(), { auth: { token: accessToken } });
     s.on('connect',    () => setConnected(true));
     s.on('disconnect', () => setConnected(false));
@@ -116,13 +114,39 @@ export default function KitchenDisplay() {
     refetchInterval: 20000,
   });
 
-  async function updateStatus(orderId, status) {
-    try {
-      await api.patch(`/orders/${orderId}/status`, { status });
+  /* ── Optimistic status update — the order moves to the next column
+     instantly on click, before the server responds. Rolls back if the
+     request actually fails. ── */
+  const updateStatus = useMutation({
+    mutationFn: ({ orderId, status }) => api.patch(`/orders/${orderId}/status`, { status }),
+
+    onMutate: async ({ orderId, status }) => {
+      await qc.cancelQueries(['kitchen-queue']);
+      const previous = qc.getQueryData(['kitchen-queue']);
+
+      qc.setQueryData(['kitchen-queue'], (old) => {
+        if (!old) return old;
+        // Delivered orders leave the kitchen queue entirely
+        if (status === 'delivered') return old.filter(o => o.id !== orderId);
+        return old.map(o => o.id === orderId ? { ...o, status } : o);
+      });
+
+      return { previous };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(['kitchen-queue'], context.previous);
+      toast.error('Failed to update — reverted');
+    },
+
+    onSuccess: (_, vars) => {
+      toast.success(`Marked as ${vars.status}`);
+    },
+
+    onSettled: () => {
       qc.invalidateQueries(['kitchen-queue']);
-      toast.success(`Marked as ${status}`);
-    } catch { toast.error('Failed to update'); }
-  }
+    },
+  });
 
   async function handleLogout() {
     await logout();
@@ -152,7 +176,6 @@ export default function KitchenDisplay() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Active orders count */}
           {active > 0 && (
             <div className="bg-[#e94560]/15 border border-[#e94560]/25 rounded-xl px-3 py-1.5 flex items-center gap-1.5">
               <span className="text-[#e94560] font-black text-sm">{active}</span>
@@ -199,7 +222,6 @@ export default function KitchenDisplay() {
               const C = COLORS[color];
               return (
                 <div key={key} className={`${C.card} border rounded-2xl p-4 flex flex-col`}>
-                  {/* Column header */}
                   <div className="flex items-center justify-between mb-4 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span>{emoji}</span>
@@ -212,7 +234,6 @@ export default function KitchenDisplay() {
                     )}
                   </div>
 
-                  {/* Orders */}
                   <div className="space-y-3 flex-1">
                     {grouped[key].length === 0 && (
                       <div className="flex flex-col items-center justify-center py-10 text-white/15">
@@ -236,7 +257,6 @@ export default function KitchenDisplay() {
                           )}
 
                           <div className="p-3">
-                            {/* Order header */}
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-white font-black text-sm">#{order.id.slice(0,6).toUpperCase()}</span>
@@ -249,12 +269,10 @@ export default function KitchenDisplay() {
                               <Timer createdAt={order.created_at} />
                             </div>
 
-                            {/* Customer */}
                             {order.customer_name && order.customer_name !== 'Guest' && (
                               <p className="text-white/35 text-xs mb-2">{order.customer_name}</p>
                             )}
 
-                            {/* Items */}
                             <div className="space-y-1.5 mb-3">
                               {order.items?.map((item, i) => (
                                 <div key={i} className="flex items-start gap-2">
@@ -271,7 +289,6 @@ export default function KitchenDisplay() {
                               ))}
                             </div>
 
-                            {/* Special instructions */}
                             {order.special_instructions && (
                               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-2.5 py-1.5 mb-3 flex gap-2">
                                 <span className="text-yellow-400 text-xs flex-shrink-0">📝</span>
@@ -279,16 +296,15 @@ export default function KitchenDisplay() {
                               </div>
                             )}
 
-                            {/* Action button */}
                             {NEXT[key] && (
-                              <button onClick={() => updateStatus(order.id, NEXT[key])}
+                              <button onClick={() => updateStatus.mutate({ orderId: order.id, status: NEXT[key] })}
                                 className={`w-full text-xs font-bold py-2 rounded-xl border transition-all ${C.btn}`}>
                                 → Mark as {NEXT[key].charAt(0).toUpperCase() + NEXT[key].slice(1)}
                               </button>
                             )}
 
                             {key === 'ready' && (
-                              <button onClick={() => updateStatus(order.id, 'delivered')}
+                              <button onClick={() => updateStatus.mutate({ orderId: order.id, status: 'delivered' })}
                                 className="w-full text-xs font-bold py-2 rounded-xl border transition-all bg-green-500/15 border-green-500/30 text-green-400 hover:bg-green-500/25 mt-1">
                                 ✓ Delivered
                               </button>

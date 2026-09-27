@@ -5,6 +5,7 @@ import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
+import { getSocketUrl } from '../utils/socketUrl';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -65,9 +66,10 @@ export default function StaffDashboard() {
     return () => clearInterval(id);
   }, []);
 
-  /* socket */
+  /* socket — connects directly to the backend, not the frontend host,
+     so it doesn't hang on "Reconnecting..." */
   useEffect(() => {
-    const s = io('/', { auth: { token: accessToken } });
+    const s = io(getSocketUrl(), { auth: { token: accessToken } });
     s.on('connect',    () => setConnected(true));
     s.on('disconnect', () => setConnected(false));
     s.on('new_order',  () => {
@@ -132,7 +134,6 @@ export default function StaffDashboard() {
   function waiterBeep() {
     try {
       const ctx = getAudioCtx();
-      // 3 urgent ding sounds
       [880, 1100, 880].forEach((freq, i) => {
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
@@ -159,15 +160,57 @@ export default function StaffDashboard() {
     refetchInterval: 15000,
   });
 
+  /* ── Optimistic status update — updates the Overview lists, Orders tab,
+     Kitchen Queue tab, and the detail modal all instantly, before the
+     server even responds. Rolls back everywhere if the request fails. ── */
   const updateStatus = useMutation({
     mutationFn: ({ id, status }) => api.patch(`/orders/${id}/status`, { status }),
-    onSuccess: () => {
+
+    onMutate: async ({ id, status }) => {
+      await qc.cancelQueries(['staff-orders']);
+      await qc.cancelQueries(['staff-kitchen']);
+
+      const previousOrders  = qc.getQueryData(['staff-orders', statusFilter]);
+      const previousKitchen = qc.getQueryData(['staff-kitchen']);
+
+      // Update the orders list (respecting the active status filter)
+      qc.setQueryData(['staff-orders', statusFilter], (old) => {
+        if (!old) return old;
+        // If a filter is active and the order no longer matches it, drop it from view
+        if (statusFilter && status !== statusFilter) {
+          return old.filter(o => o.id !== id);
+        }
+        return old.map(o => o.id === id ? { ...o, status } : o);
+      });
+
+      // Update kitchen queue — orders leave the queue once delivered
+      qc.setQueryData(['staff-kitchen'], (old) => {
+        if (!old) return old;
+        if (status === 'delivered') return old.filter(o => o.id !== id);
+        return old.map(o => o.id === id ? { ...o, status } : o);
+      });
+
+      // Keep the open detail modal in sync
+      setSelectedOrder(prev => (prev && prev.id === id ? { ...prev, status } : prev));
+
+      return { previousOrders, previousKitchen };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previousOrders)  qc.setQueryData(['staff-orders', statusFilter], context.previousOrders);
+      if (context?.previousKitchen) qc.setQueryData(['staff-kitchen'], context.previousKitchen);
+      toast.error('Failed to update status — reverted');
+    },
+
+    onSuccess: (_, vars) => {
+      toast.success('Status updated');
+      if (vars.status === 'delivered' || vars.status === 'cancelled') setSelectedOrder(null);
+    },
+
+    onSettled: () => {
       qc.invalidateQueries(['staff-orders']);
       qc.invalidateQueries(['staff-kitchen']);
-      toast.success('Status updated');
-      setSelectedOrder(null);
     },
-    onError: () => toast.error('Failed to update status'),
   });
 
   /* derived stats */
@@ -197,7 +240,6 @@ export default function StaffDashboard() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-sm mx-4"
             >
-              {/* Pulsing icon */}
               <div className="text-center mb-4">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-500/20 border-2 border-yellow-400 animate-pulse text-5xl mb-3">
                   {waiterCalls[0].type === 'water' ? '💧' : waiterCalls[0].type === 'bill' ? '🧾' : '🔔'}
@@ -211,14 +253,12 @@ export default function StaffDashboard() {
                 <div className="text-white/40 text-sm mt-1">{dayjs(waiterCalls[0].time).fromNow()}</div>
               </div>
 
-              {/* If multiple calls queued */}
               {waiterCalls.length > 1 && (
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2 mb-4 text-center">
                   <span className="text-yellow-400 text-sm font-bold">+{waiterCalls.length - 1} more call{waiterCalls.length > 2 ? 's' : ''} waiting</span>
                 </div>
               )}
 
-              {/* Action button */}
               <button
                 onClick={() => setWaiterCalls(p => p.slice(1))}
                 className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black text-lg py-4 rounded-2xl transition-colors shadow-lg shadow-yellow-500/30"
@@ -255,7 +295,6 @@ export default function StaffDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Waiter call badge */}
           {waiterCalls.length > 0 && (
             <div className="flex items-center gap-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl px-3 py-1.5 animate-pulse">
               <span className="text-yellow-400 text-xs font-bold">🔔 {waiterCalls.length} call{waiterCalls.length > 1 ? 's' : ''}</span>
@@ -324,7 +363,6 @@ export default function StaffDashboard() {
                 <p className="text-white/40 text-sm">{user?.restaurantName} · Staff Dashboard</p>
               </div>
 
-              {/* Stat cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 {[
                   { label: 'Active orders',   value: activeOrders.length,                       color: 'text-white',        icon: '📦' },
@@ -340,7 +378,6 @@ export default function StaffDashboard() {
                 ))}
               </div>
 
-              {/* Ready to serve — urgent list */}
               {readyOrders.length > 0 && (
                 <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-4 mb-4">
                   <h3 className="text-green-400 font-bold text-sm mb-3 flex items-center gap-2">
@@ -355,8 +392,7 @@ export default function StaffDashboard() {
                           <div className="text-white/50 text-xs mt-0.5">{order.items?.map(i=>`${i.item_name_snapshot} ×${i.quantity}`).join(' · ')}</div>
                         </div>
                         <button onClick={() => updateStatus.mutate({ id: order.id, status: 'delivered' })}
-                          disabled={updateStatus.isPending}
-                          className="bg-green-500 text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 flex-shrink-0">
+                          className="bg-green-500 text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-green-600 transition-colors flex-shrink-0">
                           Mark Delivered ✓
                         </button>
                       </div>
@@ -365,7 +401,6 @@ export default function StaffDashboard() {
                 </div>
               )}
 
-              {/* New orders — need confirmation */}
               {newOrders.length > 0 && (
                 <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 mb-4">
                   <h3 className="text-yellow-400 font-bold text-sm mb-3 flex items-center gap-2">
@@ -381,13 +416,11 @@ export default function StaffDashboard() {
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <button onClick={() => updateStatus.mutate({ id: order.id, status: 'confirmed' })}
-                            disabled={updateStatus.isPending}
-                            className="bg-yellow-500 text-black text-xs font-bold px-3 py-2 rounded-xl hover:bg-yellow-400 transition-colors disabled:opacity-50">
+                            className="bg-yellow-500 text-black text-xs font-bold px-3 py-2 rounded-xl hover:bg-yellow-400 transition-colors">
                             Confirm ✓
                           </button>
                           <button onClick={() => updateStatus.mutate({ id: order.id, status: 'cancelled' })}
-                            disabled={updateStatus.isPending}
-                            className="bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold px-3 py-2 rounded-xl hover:bg-red-500/30 transition-colors disabled:opacity-50">
+                            className="bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold px-3 py-2 rounded-xl hover:bg-red-500/30 transition-colors">
                             ✕
                           </button>
                         </div>
@@ -397,7 +430,6 @@ export default function StaffDashboard() {
                 </div>
               )}
 
-              {/* All quiet */}
               {activeOrders.length === 0 && (
                 <div className="text-center py-16 text-white/20">
                   <div className="text-5xl mb-3">✨</div>
@@ -406,7 +438,6 @@ export default function StaffDashboard() {
                 </div>
               )}
 
-              {/* Quick actions */}
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <button onClick={() => setTab('orders')} className="bg-white/5 border border-white/5 rounded-2xl p-4 text-left hover:bg-white/8 transition-all">
                   <div className="text-2xl mb-2">📋</div>
@@ -473,8 +504,7 @@ export default function StaffDashboard() {
                         {NEXT_STATUS[order.status] && (
                           <button
                             onClick={e => { e.stopPropagation(); updateStatus.mutate({ id: order.id, status: NEXT_STATUS[order.status] }); }}
-                            disabled={updateStatus.isPending}
-                            className="mt-3 text-xs font-bold px-3 py-2 bg-[#e94560]/15 text-[#e94560] border border-[#e94560]/30 rounded-xl hover:bg-[#e94560]/25 transition-colors disabled:opacity-50">
+                            className="mt-3 text-xs font-bold px-3 py-2 bg-[#e94560]/15 text-[#e94560] border border-[#e94560]/30 rounded-xl hover:bg-[#e94560]/25 transition-colors">
                             Mark as {NEXT_STATUS[order.status]} →
                           </button>
                         )}
@@ -544,12 +574,8 @@ export default function StaffDashboard() {
 
                           {NEXT_STATUS[order.status] && (
                             <button onClick={() => updateStatus.mutate({ id: order.id, status: NEXT_STATUS[order.status] })}
-                              disabled={updateStatus.isPending}
-                              className={`w-full py-2.5 rounded-xl text-xs font-black border transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${sc.bg} ${sc.border} ${sc.text} hover:opacity-80`}>
-                              {updateStatus.isPending
-                                ? <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                                : <>→ Mark as {NEXT_STATUS[order.status]}</>
-                              }
+                              className={`w-full py-2.5 rounded-xl text-xs font-black border transition-all flex items-center justify-center gap-2 ${sc.bg} ${sc.border} ${sc.text} hover:opacity-80`}>
+                              → Mark as {NEXT_STATUS[order.status]}
                             </button>
                           )}
                         </div>
@@ -590,7 +616,6 @@ export default function StaffDashboard() {
                   </div>
                 </div>
 
-                {/* Items */}
                 <div className="bg-white/5 rounded-2xl p-4 mb-4">
                   <h4 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Order items</h4>
                   <div className="space-y-3">
@@ -619,7 +644,6 @@ export default function StaffDashboard() {
                   </div>
                 )}
 
-                {/* Table info */}
                 {selectedOrder.table_number && (
                   <div className="bg-white/5 rounded-2xl px-4 py-3 mb-4 flex justify-between">
                     <span className="text-white/40 text-sm">Table</span>
@@ -627,19 +651,15 @@ export default function StaffDashboard() {
                   </div>
                 )}
 
-                {/* Status actions */}
                 {NEXT_STATUS[selectedOrder.status] && (
                   <button onClick={() => updateStatus.mutate({ id: selectedOrder.id, status: NEXT_STATUS[selectedOrder.status] })}
-                    disabled={updateStatus.isPending}
-                    className="w-full bg-[#e94560] hover:bg-[#d63050] disabled:opacity-50 text-white font-bold py-4 rounded-2xl transition-colors mb-3">
-                    {updateStatus.isPending ? 'Updating...' : `Mark as ${NEXT_STATUS[selectedOrder.status]} →`}
+                    className="w-full bg-[#e94560] hover:bg-[#d63050] text-white font-bold py-4 rounded-2xl transition-colors mb-3">
+                    Mark as {NEXT_STATUS[selectedOrder.status]} →
                   </button>
                 )}
 
-                {/* Cancel option */}
                 {['placed','confirmed'].includes(selectedOrder.status) && (
                   <button onClick={() => updateStatus.mutate({ id: selectedOrder.id, status: 'cancelled' })}
-                    disabled={updateStatus.isPending}
                     className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-semibold py-3 rounded-2xl hover:bg-red-500/20 transition-colors">
                     Cancel order
                   </button>
