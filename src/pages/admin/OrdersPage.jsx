@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { getSocketUrl } from '../../utils/socketUrl';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -48,9 +49,10 @@ export default function OrdersPage() {
   const [connected,    setConnected]     = useState(false);
   const [upiAlert,     setUpiAlert]      = useState(null); // soundbox-style alert
 
-  /* ── Live updates via Socket.io ── */
+  /* ── Live updates via Socket.io — connects directly to backend,
+     not through the frontend host, so it doesn't hang/reconnect ── */
   useEffect(() => {
-    const s = io('/', { auth: { token: accessToken } });
+    const s = io(getSocketUrl(), { auth: { token: accessToken } });
     s.on('connect',    () => setConnected(true));
     s.on('disconnect', () => setConnected(false));
     s.on('new_order',  () => {
@@ -77,12 +79,9 @@ export default function OrdersPage() {
     // Soundbox-style UPI payment notification
     s.on('upi_payment_received', ({ amount, payerName, txnId, orderId }) => {
       setUpiAlert({ amount, payerName, txnId, orderId, time: new Date() });
-      // Auto-dismiss after 8 seconds
       setTimeout(() => setUpiAlert(null), 8000);
-      // Play beep sound
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // Success chime — 3 ascending notes
         [[880,0],[1100,0.15],[1320,0.3]].forEach(([freq, delay]) => {
           const osc = ctx.createOscillator(), gain = ctx.createGain();
           osc.connect(gain); gain.connect(ctx.destination);
@@ -118,25 +117,72 @@ export default function OrdersPage() {
     refetchInterval: 20000,
   });
 
+  /* ── Optimistic status update — UI changes instantly, server call
+     happens in the background. Rolls back automatically if it fails. ── */
   const updateStatus = useMutation({
     mutationFn: ({ id, status }) => api.patch(`/orders/${id}/status`, { status }),
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries(['admin-orders']);
-      toast.success(`Order marked as ${vars.status}`);
-      setSelected(null);
+
+    onMutate: async ({ id, status }) => {
+      await qc.cancelQueries(['admin-orders', filter]);
+      const previous = qc.getQueryData(['admin-orders', filter]);
+
+      qc.setQueryData(['admin-orders', filter], (old) =>
+        old ? old.map(o => o.id === id ? { ...o, status } : o) : old
+      );
+
+      // Also update the open detail sheet immediately if it's the same order
+      setSelected(prev => (prev && prev.id === id ? { ...prev, status } : prev));
+
+      return { previous };
     },
-    onError: () => toast.error('Failed to update status'),
+
+    onError: (_err, _vars, context) => {
+      // Roll back to the pre-click state
+      if (context?.previous) qc.setQueryData(['admin-orders', filter], context.previous);
+      toast.error('Failed to update status — reverted');
+    },
+
+    onSuccess: (_, vars) => {
+      toast.success(`Order marked as ${vars.status}`);
+      // Close the sheet only for terminal-ish transitions, otherwise let admin keep working
+      if (vars.status === 'delivered' || vars.status === 'cancelled') setSelected(null);
+    },
+
+    onSettled: () => {
+      // Reconcile with the server in the background without blocking the UI
+      qc.invalidateQueries(['admin-orders']);
+    },
   });
 
+  /* ── Optimistic mark-paid ── */
   const markPaidMutation = useMutation({
     mutationFn: (orderId) => api.patch(`/webhooks/manual-paid/${orderId}`),
+
+    onMutate: async (orderId) => {
+      await qc.cancelQueries(['admin-orders', filter]);
+      const previous = qc.getQueryData(['admin-orders', filter]);
+
+      qc.setQueryData(['admin-orders', filter], (old) =>
+        old ? old.map(o => o.id === orderId ? { ...o, payment_status: 'paid' } : o) : old
+      );
+
+      return { previous };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(['admin-orders', filter], context.previous);
+      toast.error('Failed to mark as paid — reverted');
+    },
+
     onSuccess: () => {
-      qc.invalidateQueries(['admin-orders']);
       toast.success('💰 Marked as Paid!', {
         style: { background: '#1A1A1A', color: '#fff', border: '1px solid rgba(34,197,94,0.3)' },
       });
     },
-    onError: () => toast.error('Failed to mark as paid'),
+
+    onSettled: () => {
+      qc.invalidateQueries(['admin-orders']);
+    },
   });
 
   // Summary counts
@@ -275,8 +321,7 @@ export default function OrdersPage() {
                   {NEXT[order.status] && (
                     <button
                       onClick={e => { e.stopPropagation(); updateStatus.mutate({ id: order.id, status: NEXT[order.status] }); }}
-                      disabled={updateStatus.isPending}
-                      className="text-xs font-bold px-3 py-2 bg-[#e94560]/15 text-[#e94560] border border-[#e94560]/25 rounded-xl hover:bg-[#e94560]/25 transition-colors disabled:opacity-50 flex-shrink-0"
+                      className="text-xs font-bold px-3 py-2 bg-[#e94560]/15 text-[#e94560] border border-[#e94560]/25 rounded-xl hover:bg-[#e94560]/25 transition-colors flex-shrink-0"
                     >
                       → {NEXT[order.status]}
                     </button>
@@ -381,10 +426,9 @@ export default function OrdersPage() {
                 {NEXT[selected.status] && (
                   <button
                     onClick={() => updateStatus.mutate({ id: selected.id, status: NEXT[selected.status] })}
-                    disabled={updateStatus.isPending}
-                    className="w-full bg-[#e94560] hover:bg-[#d63050] disabled:opacity-50 text-white font-black py-4 rounded-2xl text-sm transition-colors mb-3"
+                    className="w-full bg-[#e94560] hover:bg-[#d63050] text-white font-black py-4 rounded-2xl text-sm transition-colors mb-3"
                   >
-                    {updateStatus.isPending ? 'Updating...' : `Mark as ${NEXT[selected.status]} →`}
+                    Mark as {NEXT[selected.status]} →
                   </button>
                 )}
 
@@ -392,7 +436,6 @@ export default function OrdersPage() {
                 {['placed', 'confirmed'].includes(selected.status) && (
                   <button
                     onClick={() => updateStatus.mutate({ id: selected.id, status: 'cancelled' })}
-                    disabled={updateStatus.isPending}
                     className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-semibold py-3 rounded-2xl hover:bg-red-500/20 transition-colors text-sm"
                   >
                     Cancel this order
