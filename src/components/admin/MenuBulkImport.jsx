@@ -28,6 +28,7 @@ const ALIASES = {
   telugu: 'name_te', discount_price: 'discounted_price', offer_price: 'discounted_price',
 };
 const REQUIRED = ['category', 'name_en', 'price'];
+const OPTION_STYLE = { background: '#1a1a1a', color: '#ffffff' };
 
 function normalizeHeader(h) {
   const key = String(h || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -119,9 +120,9 @@ export default function MenuBulkImport({ mode = 'admin' }) {
             style={{ colorScheme: 'dark' }}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#e94560]/60"
           >
-            <option value="">Select restaurant…</option>
+            <option value="" style={OPTION_STYLE}>Select restaurant…</option>
             {restaurants.map(r => (
-              <option key={r.id} value={r.id}>{r.name}{r.branch_name ? ` — ${r.branch_name}` : ''} ({r.slug})</option>
+              <option key={r.id} value={r.id} style={OPTION_STYLE}>{r.name}{r.branch_name ? ` — ${r.branch_name}` : ''} ({r.slug})</option>
             ))}
           </select>
         </div>
