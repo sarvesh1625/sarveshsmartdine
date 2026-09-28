@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import MenuBulkImport from '../../components/admin/MenuBulkImport';
 
 const PLAN_COLORS = {
   free:       'bg-white/10 text-white/60 border-white/10',
@@ -32,6 +33,7 @@ const NAV = [
   { to: '/superadmin',             icon: '⚡', label: 'Overview',      exact: true },
   { to: '/superadmin/restaurants', icon: '🏪', label: 'Restaurants'               },
   { to: '/superadmin/analytics',   icon: '📊', label: 'Platform Stats'            },
+  { to: '/superadmin/menu-import', icon: '📥', label: 'Menu Import'               },
 ];
 
 function Sidebar({ onClose }) {
@@ -45,7 +47,7 @@ function Sidebar({ onClose }) {
             <span className="text-white text-sm font-black">S</span>
           </div>
           <div>
-            <div className="text-white font-black text-sm">MenuVia</div>
+            <div className="text-white font-black text-sm">MenuCloud</div>
             <div className="text-purple-400 text-xs font-semibold">Super Admin</div>
           </div>
         </div>
@@ -109,6 +111,13 @@ export default function SuperAdminDashboard() {
             <Route index              element={<Overview />} />
             <Route path="restaurants" element={<RestaurantsPage />} />
             <Route path="analytics"   element={<PlatformAnalytics />} />
+            <Route path="menu-import" element={
+              <div className="p-6">
+                <h1 className="text-2xl font-black text-white mb-1">Menu Import</h1>
+                <p className="text-white/40 text-sm mb-6">Upload a menu for any restaurant</p>
+                <MenuBulkImport mode="superadmin" />
+              </div>
+            } />
           </Routes>
         </main>
       </div>
@@ -124,12 +133,11 @@ function Overview() {
     refetchInterval: 30000,
   });
   const d = data;
-  const recentRestaurants = data?.recentRestaurants || [];
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-black text-white mb-1">Platform Overview</h1>
-        <p className="text-white/40 text-sm">All restaurants across MenuVia</p>
+        <p className="text-white/40 text-sm">All restaurants across MenuCloud</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <StatCard icon="🏪" label="Total restaurants"   value={isLoading ? null : d?.total_restaurants} />
@@ -139,7 +147,7 @@ function Overview() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon="📈" label="Total revenue"       value={isLoading ? null : fmt(d?.total_revenue)} color="text-green-400" />
-        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d?.total_orders || 0} />
+        <StatCard icon="🧾" label="Total orders"        value={isLoading ? null : d?.total_orders} />
         <StatCard icon="🔴" label="Inactive restaurants" value={isLoading ? null : d?.inactive_restaurants} color="text-red-400" />
         <StatCard icon="👤" label="Restaurant admins"   value={isLoading ? null : d?.total_admins} />
       </div>
@@ -267,11 +275,11 @@ function RestaurantsPage() {
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center hidden sm:block">
-                    <div className="text-white font-bold text-sm">{r?.total_orders || 0}</div>
+                    <div className="text-white font-bold text-sm">{r.total_orders ?? 0}</div>
                     <div className="text-white/30 text-xs">orders</div>
                   </div>
                   <div className="text-center hidden sm:block">
-                    <div className="text-green-400 font-bold text-sm">{fmt(r?.total_revenue || 0)}</div>
+                    <div className="text-green-400 font-bold text-sm">{fmt(r.total_revenue)}</div>
                     <div className="text-white/30 text-xs">revenue</div>
                   </div>
                   <div className="text-center hidden md:block">
@@ -321,12 +329,12 @@ function RestaurantsPage() {
                   {/* KPI grid */}
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: 'Total revenue',   value: fmt(detail?.restaurant?.total_revenue || 0),   color: 'text-green-400'  },
-                      { label: 'Total orders',    value: detail?.restaurant?.total_orders || 0,    color: 'text-white'      },
-                      { label: 'Menu items',      value: (detail?.restaurant?.menu_item_count ?? 0), color: 'text-white'      },
-                      { label: 'Tables',          value: (detail?.restaurant?.table_count ?? 0),     color: 'text-white'      },
-                      { label: 'Staff',           value: detail?.restaurant?.staff_count || 0,     color: 'text-white'      },
-                      { label: 'Avg rating',      value: detail?.restaurant?.avg_food_rating ? `${detail?.restaurant?.avg_food_rating}★` : '—', color: 'text-yellow-400' },
+                      { label: 'Total revenue',   value: fmt(detail.restaurant.total_revenue),   color: 'text-green-400'  },
+                      { label: 'Total orders',    value: detail.restaurant.total_orders ?? 0,    color: 'text-white'      },
+                      { label: 'Menu items',      value: detail.restaurant.menu_item_count ?? 0, color: 'text-white'      },
+                      { label: 'Tables',          value: detail.restaurant.table_count ?? 0,     color: 'text-white'      },
+                      { label: 'Staff',           value: detail.restaurant.staff_count ?? 0,     color: 'text-white'      },
+                      { label: 'Avg rating',      value: detail.restaurant.avg_food_rating ? `${detail.restaurant.avg_food_rating}★` : '—', color: 'text-yellow-400' },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="bg-white/5 rounded-xl p-3">
                         <div className={`text-lg font-black mb-0.5 ${color}`}>{value}</div>
@@ -339,14 +347,14 @@ function RestaurantsPage() {
                   <div className="bg-white/5 rounded-2xl p-4">
                     <h3 className="text-white font-bold text-sm mb-3">Restaurant info</h3>
                     {[
-                      ['Email',       detail?.restaurant?.email || '—'],
-                      ['Phone',       detail?.restaurant?.phone || '—'],
-                      ['City',        detail?.restaurant?.city  || '—'],
-                      ['State',       detail?.restaurant?.state || '—'],
-                      ['Language',    (detail?.restaurant?.default_language || 'en').toUpperCase()],
-                      ['Registered',  fmtDate(detail?.restaurant?.created_at)],
-                      ['Last order',  fmtDate(detail?.restaurant?.last_order_at)],
-                      ['Status',      detail?.restaurant?.is_active ? '🟢 Active' : '🔴 Inactive'],
+                      ['Email',       detail.restaurant.email || '—'],
+                      ['Phone',       detail.restaurant.phone || '—'],
+                      ['City',        detail.restaurant.city  || '—'],
+                      ['State',       detail.restaurant.state || '—'],
+                      ['Language',    (detail.restaurant.default_language || 'en').toUpperCase()],
+                      ['Registered',  fmtDate(detail.restaurant.created_at)],
+                      ['Last order',  fmtDate(detail.restaurant.last_order_at)],
+                      ['Status',      detail.restaurant.is_active ? '🟢 Active' : '🔴 Inactive'],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
                         <span className="text-white/40 text-xs">{label}</span>
@@ -356,10 +364,10 @@ function RestaurantsPage() {
                   </div>
 
                   {/* Revenue chart */}
-                  {(detail?.revenueByDay?.length > 0) && (
+                  {detail.revenueByDay?.length > 0 && (
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-4">Revenue — last 7 days</h3>
-                      <MiniBarChart data={detail?.revenueByDay || []} />
+                      <MiniBarChart data={detail.revenueByDay} />
                     </div>
                   )}
 
@@ -368,17 +376,17 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Top selling items</h3>
                       <div className="space-y-2">
-                        {detail?.topItems?.map((item, i) => (
+                        {detail.topItems.map((item, i) => (
                           <div key={item.name} className="flex items-center gap-2">
                             <span className="text-white/30 text-xs w-4">#{i+1}</span>
                             <div className="flex-1">
                               <div className="flex justify-between text-xs mb-1">
                                 <span className="text-white/80 font-semibold truncate">{item.name}</span>
-                                <span className="text-white/50 flex-shrink-0 ml-2">{item.total_sold} sold · {fmt(item.total_revenue || 0)}</span>
+                                <span className="text-white/50 flex-shrink-0 ml-2">{item.total_sold} sold · {fmt(item.revenue)}</span>
                               </div>
                               <div className="h-1 bg-white/10 rounded-full">
                                 <div className="h-full bg-[#e94560] rounded-full"
-                                  style={{ width: `${(item.total_sold / detail?.topItems?.[0]?.total_sold || 1) * 100}%` }} />
+                                  style={{ width: `${(item.total_sold / detail.topItems[0].total_sold) * 100}%` }} />
                               </div>
                             </div>
                           </div>
@@ -392,7 +400,7 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Recent orders</h3>
                       <div className="space-y-1.5">
-                        {detail?.recentOrders?.map(o => (
+                        {detail.recentOrders.map(o => (
                           <div key={o.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
                             <div>
                               <span className="text-white text-xs font-bold">#{o.id.slice(0,8).toUpperCase()}</span>
@@ -416,7 +424,7 @@ function RestaurantsPage() {
                     <div className="bg-white/5 rounded-2xl p-4">
                       <h3 className="text-white font-bold text-sm mb-3">Staff members</h3>
                       <div className="space-y-2">
-                        {detail?.staff?.map(s => (
+                        {detail.staff.map(s => (
                           <div key={s.id} className="flex items-center justify-between">
                             <div>
                               <p className="text-white text-xs font-semibold">{s.name}</p>
@@ -483,7 +491,7 @@ function MiniBarChart({ data }) {
     <div className="flex items-end gap-1.5 h-28">
       {data.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <div className="text-white/30 text-[9px] text-center leading-tight">{fmt(Number(d.revenue) || 0)}</div>
+          <div className="text-white/30 text-[9px] text-center leading-tight">{fmt(d.revenue)}</div>
           <div className="w-full bg-[#e94560] rounded-t-sm"
             style={{ height: `${Math.max((Number(d.revenue) / max) * 64, 3)}px` }} />
           <div className="text-white/30 text-[9px] text-center">
@@ -503,7 +511,7 @@ function PlatformAnalytics() {
   });
   const stats          = data?.stats;
   const topRestaurants = data?.topRestaurants ?? [];
-  const revenueByDay   = Array.isArray(data?.revenueByDay) ? data.revenueByDay : [];
+  const revenueByDay   = data?.revenueByDay   ?? [];
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -538,7 +546,7 @@ function PlatformAnalytics() {
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${stats?.total_restaurants ? (value / stats?.total_restaurants || 0) * 100 : 0}%`, background: color }} />
+                  style={{ width: `${stats?.total_restaurants ? (value / stats.total_restaurants) * 100 : 0}%`, background: color }} />
               </div>
             </div>
           ))}
@@ -564,15 +572,15 @@ function PlatformAnalytics() {
                     <span className="text-white text-sm font-semibold truncate">{r.name}</span>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border uppercase ${PLAN_COLORS[r.plan_type]}`}>{r.plan_type}</span>
-                      <span className="text-green-400 text-xs font-bold">{fmt(r?.total_revenue || 0)}</span>
+                      <span className="text-green-400 text-xs font-bold">{fmt(r.total_revenue)}</span>
                     </div>
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-[#e94560] rounded-full"
-                      style={{ width: `${topRestaurants[0]?.total_revenue ? ((r?.total_revenue || 0) / (topRestaurants[0]?.total_revenue || 1)) * 100 : 0}%` }} />
+                      style={{ width: `${topRestaurants[0]?.total_revenue ? (r.total_revenue / topRestaurants[0].total_revenue) * 100 : 0}%` }} />
                   </div>
                   <div className="flex gap-3 mt-1">
-                    <span className="text-white/30 text-xs">{r?.total_orders || 0} orders</span>
+                    <span className="text-white/30 text-xs">{r.total_orders} orders</span>
                     {r.city && <span className="text-white/20 text-xs">📍 {r.city}</span>}
                   </div>
                 </div>
