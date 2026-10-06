@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../../store/authStore';
 
-export default function TrialExpiredWall() {
+export default function TrialExpiredWall({ planExpired = false }) {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
 
@@ -23,30 +23,32 @@ export default function TrialExpiredWall() {
           🔒
         </div>
 
-        <h1 className="text-white font-black text-2xl mb-3">Trial Expired</h1>
+        <h1 className="text-white font-black text-2xl mb-3">{planExpired ? 'Plan Expired' : 'Trial Expired'}</h1>
         <p className="text-white/50 text-sm leading-relaxed mb-8">
-          Your 15-day free trial has ended. Upgrade to a paid plan to continue using your restaurant dashboard, kitchen display, analytics and more.
+          {planExpired
+            ? 'Your paid plan has ended. Renew to get back your restaurant dashboard, kitchen display, analytics and more. Your menu and data are safe.'
+            : 'Your 15-day free trial has ended. Upgrade to a paid plan to continue using your restaurant dashboard, kitchen display, analytics and more.'}
         </p>
 
         {/* Plan cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {[
-         {
-  name: 'Pro',
-  price: '₹499',
-  period: '/month',
-  color: 'border-[#e94560]/40 bg-[#e94560]/8',
-  badge: 'Most Popular',
-  features: ['Unlimited tables & items', 'UPI payments', 'Analytics', 'AI ordering', 'Multi-language'],
-},
-{
-  name: 'Enterprise',
-  price: '₹1,699',
-  period: '/month',
-  color: 'border-purple-500/40 bg-purple-500/8',
-  badge: 'For chains',
-  features: ['Everything in Pro', 'Multi-branch', 'Custom domain', 'Dedicated support', 'API access'],
-},
+            {
+              name: 'Pro',
+              price: '₹499',
+              period: '/month',
+              color: 'border-[#e94560]/40 bg-[#e94560]/8',
+              badge: 'Most Popular',
+              features: ['Unlimited tables & items', 'UPI payments', 'Analytics', 'AI ordering', 'Multi-language'],
+            },
+            {
+              name: 'Enterprise',
+              price: '₹1,699',
+              period: '/month',
+              color: 'border-purple-500/40 bg-purple-500/8',
+              badge: 'For chains',
+              features: ['Everything in Pro', 'Multi-branch', 'Custom domain', 'Dedicated support', 'API access'],
+            },
           ].map(plan => (
             <div key={plan.name} className={`rounded-2xl border p-4 text-left ${plan.color}`}>
               <div className="flex items-center justify-between mb-1">
@@ -74,7 +76,7 @@ export default function TrialExpiredWall() {
           onClick={() => navigate('/admin/upgrade')}
           className="w-full bg-[#e94560] hover:bg-[#d63050] text-white font-black py-4 rounded-2xl text-base transition-colors mb-3 shadow-lg shadow-[#e94560]/30"
         >
-          Upgrade Now — Keep Your Dashboard
+          {planExpired ? 'Renew Now — Get Your Dashboard Back' : 'Upgrade Now — Keep Your Dashboard'}
         </button>
 
         <button
@@ -84,9 +86,9 @@ export default function TrialExpiredWall() {
           Sign out
         </button>
 
-       <p className="text-white/20 text-xs mt-4">
-  Questions? Contact us at sarveshthokala1625@gmail.com
-</p>
+        <p className="text-white/20 text-xs mt-4">
+          Questions? Contact us at sarveshthokala1625@gmail.com or WhatsApp +91 93906 83569
+        </p>
       </motion.div>
     </div>
   );

@@ -216,7 +216,8 @@ export default function AdminDashboard() {
 
   // Show trial expired wall if trial is over and not on paid plan
   if (billing && !billing.hasAccess) {
-    return <TrialExpiredWall />;
+    // return <TrialExpiredWall />;
+    return <TrialExpiredWall planExpired={!!billing.planExpired} />;
   }
 
   return (

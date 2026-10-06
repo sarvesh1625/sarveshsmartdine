@@ -19,8 +19,8 @@ const PLANS = [
   {
     key:     'pro',
     name:    'Pro',
-    price:   '499',
-    amount:  99900,
+    price:   '₹499',
+    amount:  49900,
     period:  '/month',
     color:   'border-[#e94560]/40 bg-[#e94560]/6',
     badge:   'Most Popular',
@@ -29,8 +29,8 @@ const PLANS = [
   {
     key:     'enterprise',
     name:    'Enterprise',
-    price:   '₹1699',
-    amount:  299900,
+    price:   '₹1,699',
+    amount:  169900,
     period:  '/month',
     color:   'border-purple-500/40 bg-purple-500/6',
     badge:   'For chains',
