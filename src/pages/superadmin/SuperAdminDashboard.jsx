@@ -189,7 +189,7 @@ function RestaurantsPage() {
     queryFn: () => api.get('/superadmin/restaurants').then(r => r.data.data),
   });
 
-  const { data: detail, isLoading: detailLoading } = useQuery({
+  const { data: detail, isLoading: detailLoading, isError: detailError, refetch: refetchDetail } = useQuery({
     queryKey: ['sa-restaurant-detail', selected?.id],
     queryFn: () => api.get(`/superadmin/restaurants/${selected.id}`).then(r => r.data.data),
     enabled: !!selected?.id,
@@ -324,6 +324,16 @@ function RestaurantsPage() {
               <div className="p-6 space-y-5">
                 {detailLoading ? (
                   <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />)}</div>
+                ) : detailError ? (
+                  <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">⚠️</div>
+                    <p className="text-red-300 font-bold text-sm mb-1">Could not load this restaurant's details</p>
+                    <p className="text-white/40 text-xs mb-4">The server didn't send the data. This is a loading problem, not a problem with the restaurant.</p>
+                    <button onClick={() => refetchDetail()}
+                      className="text-xs font-bold px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl transition-colors">
+                      Try again
+                    </button>
+                  </div>
                 ) : detail ? <>
 
                   {/* KPI grid */}
