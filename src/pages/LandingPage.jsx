@@ -605,7 +605,7 @@ export default function LandingPage() {
                     { icon: '👤', label: 'Founder',       value: 'Tokala Sarveswara Rao'      },
                     { icon: '📧', label: 'Email us',       value: 'sarveshthokala1625@gmail.com' },
                     { icon: '💬', label: 'WhatsApp',       value: '+91 93906 83569'              },
-                    { icon: '📍', label: 'Based in',       value: 'Andhra Pradesh, India'        },
+                    { icon: '📍', label: 'Based in',       value: 'main road medivada, Andhra Pradesh, India'        },
                     { icon: '🕐', label: 'Response time',  value: 'Within 24 hours'              },
                   ].map(({ icon, label, value }) => (
                     <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
