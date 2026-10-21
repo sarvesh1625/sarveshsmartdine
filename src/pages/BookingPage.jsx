@@ -87,26 +87,34 @@ export default function BookingPage() {
   }
 
 
-
-  // PhonePe auto-payment for booking advance
-  async function payViaPhonePe() {
-    if (!bookingId || !advanceAmt || !restaurant?.id) return;
+  // Online payment for the booking advance (PhonePe gateway: UPI, cards, net banking).
+  // The customer is sent to PhonePe, pays there, and the restaurant is confirmed automatically.
+  const [payError, setPayError] = useState('');
+  async function payOnline() {
+    if (!bookingId || !restaurant?.id) return;
     setLoading(true);
+    setPayError('');
     try {
       const { data } = await axios.post('/api/v1/webhooks/phonepe-init', {
         bookingId,
         restaurantId: restaurant.id,
-        amount: advanceAmt,
       });
       if (data.data?.redirectUrl) {
         window.location.href = data.data.redirectUrl;
-      } else {
-        toast.error('Could not open PhonePe. Scan QR to pay.');
+        return;
       }
-    } catch {
-      toast.error('PhonePe unavailable. Scan QR to pay.');
+      setPayError('Could not start the payment. Please try again.');
+    } catch (err) {
+      const msg = err.response?.data?.message;
+      console.error('Booking payment failed:', msg || err.message);
+      setPayError(
+        err.response?.status === 503
+          ? 'Online payment is not set up for this restaurant yet.'
+          : 'Payment could not be started. Please try again in a moment.'
+      );
     } finally { setLoading(false); }
   }
+
 
   const grad  = 'linear-gradient(135deg, #e94560, #c0392b)';
   const inp   = 'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/30 focus:outline-none focus:border-[#e94560]/60 transition-colors';
@@ -363,60 +371,20 @@ export default function BookingPage() {
           </motion.div>
         )}
 
-        {/* ── STEP 3: PAY VIA UPI ── */}
+        {/* ── STEP 3: PAY ADVANCE ── */}
         {step === 3 && booking && (
           <motion.div key="pay" initial={{ opacity:0, x:30 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-30 }}
-            className="px-4 py-5 max-w-lg mx-auto space-y-5 text-center">
-
-            <div>
-              <p className="text-white font-black text-xl mb-1">Pay ₹{advanceAmt} Advance</p>
-              <p className="text-white/40 text-sm">Scan QR with PhonePe, GPay, Paytm or any UPI app</p>
-            </div>
-
-            {/* Static UPI QR */}
-            <div className="flex justify-center">
-              <div className="bg-white p-4 rounded-2xl shadow-xl">
-                {upiId ? (
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'Restaurant')}&am=${advanceAmt.toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Advance booking #${bookingId?.slice(0,8).toUpperCase()}`)}`
-                    )}`}
-                    alt="UPI QR" className="w-48 h-48 rounded-lg"
-                  />
-                ) : (
-                  <div className="w-48 h-48 flex items-center justify-center text-gray-400 text-center text-sm">
-                    <div><div className="text-4xl mb-2">⚠️</div>UPI not configured<br/>Contact restaurant</div>
-                  </div>
-                )}
-              </div>
-            </div>
+            className="px-4 py-5 max-w-lg mx-auto space-y-5">
 
             {/* Amount */}
-            <div className="bg-[#e94560]/10 border border-[#e94560]/25 rounded-2xl px-6 py-4">
-              <p className="text-white/40 text-xs mb-1">Scan & pay exactly</p>
-              <p className="text-white font-black text-4xl">₹{advanceAmt}</p>
-              <p className="text-white/30 text-sm mt-1">UPI: {upiId || 'Not set'}</p>
-              <p className="text-white/20 text-xs mt-0.5">₹{balanceAmt} remaining — pay on arrival</p>
+            <div className="text-center bg-[#e94560]/10 border border-[#e94560]/25 rounded-2xl px-6 py-6">
+              <p className="text-white/50 text-sm mb-1">Advance to confirm your booking</p>
+              <p className="text-white font-black text-5xl">₹{advanceAmt}</p>
+              <p className="text-white/40 text-sm mt-2">₹{balanceAmt} remaining — pay at the restaurant</p>
             </div>
 
-            {/* App shortcuts */}
-            {upiId && (
-              <div className="flex gap-2">
-                {[
-                  { name:'PhonePe', bg:'bg-purple-600', link:`phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
-                  { name:'GPay',    bg:'bg-blue-600',   link:`tez://upi/pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
-                  { name:'Paytm',   bg:'bg-sky-500',    link:`paytmmp://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
-                ].map(a => (
-                  <a key={a.name} href={a.link}
-                    className={`${a.bg} text-white text-xs font-bold py-2.5 rounded-xl flex-1 text-center`}>
-                    {a.name}
-                  </a>
-                ))}
-              </div>
-            )}
-
             {/* Order summary */}
-            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-left space-y-1.5 text-sm">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-1.5 text-sm">
               {cart.map(c => (
                 <div key={c.item.id} className="flex justify-between">
                   <span className="text-white/55">{c.item.name_en} × {c.quantity}</span>
@@ -428,39 +396,50 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="bg-white/5 border border-white/8 rounded-xl p-4 text-left space-y-2">
-              {[
-                { icon:'📱', text:'Scan QR or tap app above' },
-                { icon:'✅', text:`Pay exactly ₹${advanceAmt} — amount pre-filled` },
-                { icon:'⚡', text:'Restaurant gets auto-notified when payment completes' },
-              ].map((s,i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span>{s.icon}</span>
-                  <span className="text-white/50 text-xs">{s.text}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* PhonePe auto-pay — redirects to PhonePe, webhook auto-confirms */}
-            <button onClick={payViaPhonePe} disabled={loading}
-              className="w-full text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 mb-3"
-              style={{ background: 'linear-gradient(135deg, #5f259f, #7b2d9e)' }}>
+            {/* One-tap payment */}
+            <button onClick={payOnline} disabled={loading}
+              className="w-full text-white font-black py-4 rounded-2xl text-base flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{ background: grad }}>
               {loading
-                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Opening PhonePe...</>
-                : <>⚡ Pay ₹{advanceAmt} via PhonePe — Auto confirms!</>}
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Opening payment…</>
+                : <>Pay ₹{advanceAmt} securely →</>}
             </button>
+            <p className="text-center text-white/35 text-xs -mt-2">
+              UPI (PhonePe, GPay, Paytm), cards and net banking · confirmed automatically
+            </p>
 
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-white/25 text-xs">or scan QR manually</span>
-              <div className="flex-1 h-px bg-white/10" />
-            </div>
+            {payError && (
+              <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-sm text-red-300">
+                {payError}
+              </div>
+            )}
 
-            <button onClick={() => setStep(4)}
-              className="w-full border border-white/10 text-white/40 font-semibold py-3 rounded-xl text-sm">
-              I paid via QR — Track Booking →
-            </button>
+            {/* Fallback only if online payment failed AND the restaurant has a UPI ID: open a UPI app directly */}
+            {payError && upiId && (
+              <div className="space-y-2">
+                <p className="text-white/40 text-xs text-center">Or pay directly with a UPI app (amount pre-filled)</p>
+                <div className="flex gap-2">
+                  {[
+                    { name:'PhonePe', bg:'bg-purple-600', link:`phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
+                    { name:'GPay',    bg:'bg-blue-600',   link:`tez://upi/pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
+                    { name:'Paytm',   bg:'bg-sky-500',    link:`paytmmp://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name||'')}&am=${advanceAmt.toFixed(2)}&cu=INR` },
+                  ].map(a => (
+                    <a key={a.name} href={a.link}
+                      className={`${a.bg} text-white text-xs font-bold py-2.5 rounded-xl flex-1 text-center`}>
+                      {a.name}
+                    </a>
+                  ))}
+                </div>
+                <button onClick={() => navigate(`/booking/${bookingId}`)}
+                  className="w-full border border-white/10 text-white/50 font-semibold py-3 rounded-xl text-sm">
+                  I paid — Track my booking →
+                </button>
+              </div>
+            )}
+
+            <p className="text-center text-white/25 text-xs">
+              Booking #{bookingId?.slice(0,8).toUpperCase()}
+            </p>
           </motion.div>
         )}
 
