@@ -602,7 +602,7 @@ export default function LandingPage() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {[
-                    { icon: '👤', label: 'Founder',       value: 'Tokala Sarveswara Rao'      },
+                    { icon: '👤', label: 'Founder',       value: 'Thokala Sarveswara Rao'      },
                     { icon: '📧', label: 'Email us',       value: 'sarveshthokala1625@gmail.com' },
                     { icon: '💬', label: 'WhatsApp',       value: '+91 93906 83569'              },
                     { icon: '📍', label: 'Based in',       value: 'main road medivada, Andhra Pradesh, India'        },
