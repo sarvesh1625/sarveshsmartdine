@@ -6,6 +6,12 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 
+const RANGES = [
+  { days: 7,  label: '7 days'  },
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+];
+
 const TABS = [
   { key: 'overview',  label: '📊 Overview'  },
   { key: 'feedback',  label: '⭐ Feedback'   },
@@ -13,15 +19,25 @@ const TABS = [
 
 export default function AnalyticsPage() {
   const [tab, setTab] = useState('overview');
+  const [rangeDays, setRangeDays] = useState(30);   // chart period, default one month
 
   const { data: summary } = useQuery({
     queryKey: ['analytics-summary'],
     queryFn: () => api.get('/analytics/summary').then(r => r.data.data),
   });
-  const { data: revenue = [] } = useQuery({
-    queryKey: ['analytics-revenue'],
-    queryFn: () => api.get(`/analytics/revenue?from=${dayjs().subtract(7,'day').format('YYYY-MM-DD')}&to=${dayjs().format('YYYY-MM-DD')}`).then(r => r.data.data),
+  const { data: revenueRaw = [] } = useQuery({
+    queryKey: ['analytics-revenue', rangeDays],
+    queryFn: () => api.get(`/analytics/revenue?from=${dayjs().subtract(rangeDays - 1,'day').format('YYYY-MM-DD')}&to=${dayjs().format('YYYY-MM-DD')}`).then(r => r.data.data),
   });
+
+  // One bar per day for the whole period (days with no orders show as 0)
+  const revenue = Array.from({ length: rangeDays }, (_, i) => {
+    const day = dayjs().subtract(rangeDays - 1 - i, 'day').format('YYYY-MM-DD');
+    const hit = revenueRaw.find(r => dayjs(r.date).format('YYYY-MM-DD') === day);
+    return { date: day, revenue: Number(hit?.revenue || 0), orders: Number(hit?.orders || 0) };
+  });
+  const periodRevenue = revenue.reduce((s, r) => s + r.revenue, 0);
+  const periodOrders  = revenue.reduce((s, r) => s + r.orders, 0);
   const { data: topItems = [] } = useQuery({
     queryKey: ['analytics-top-items'],
     queryFn: () => api.get('/analytics/top-items').then(r => r.data.data),
@@ -73,26 +89,41 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Revenue chart */}
-          {revenue.length > 0 && (
-            <div className="bg-white/5 border border-white/5 rounded-2xl p-5 mb-6">
-              <h2 className="text-white font-bold mb-4">Revenue — last 7 days</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={revenue} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
-                    tickFormatter={d => dayjs(d).format('DD MMM')} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
-                    tickFormatter={v => `₹${v}`} />
-                  <Tooltip
-                    contentStyle={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }}
-                    formatter={v => [`₹${v}`, 'Revenue']}
-                    labelFormatter={d => dayjs(d).format('DD MMM YYYY')}
-                  />
-                  <Bar dataKey="revenue" fill="#e94560" radius={[6,6,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-5 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+              <h2 className="text-white font-bold">Revenue — last {rangeDays} days</h2>
+              <div className="flex gap-1.5">
+                {RANGES.map(r => (
+                  <button key={r.days} onClick={() => setRangeDays(r.days)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      rangeDays === r.days ? 'bg-[#e94560] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                    }`}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+            <p className="text-white/40 text-xs mb-4">
+              ₹{periodRevenue.toFixed(0)} from {periodOrders} order{periodOrders === 1 ? '' : 's'} in this period
+            </p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={revenue} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                  tickFormatter={d => dayjs(d).format('DD MMM')}
+                  interval={rangeDays <= 7 ? 0 : rangeDays <= 30 ? 3 : 9} />
+                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                  tickFormatter={v => `₹${v}`} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  contentStyle={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }}
+                  formatter={(v, name, item) => [`₹${v} · ${item.payload.orders} order${item.payload.orders === 1 ? '' : 's'}`, 'Revenue']}
+                  labelFormatter={d => dayjs(d).format('DD MMM YYYY')}
+                />
+                <Bar dataKey="revenue" fill="#e94560" radius={[4,4,0,0]} maxBarSize={28} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Top items */}
           {topItems.length > 0 && (
